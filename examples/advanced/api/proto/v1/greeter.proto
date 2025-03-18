@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package greeter.v1;
+
+option go_package = "github.com/legrch/netgex/examples/advanced/api/proto/v1;greeterv1";
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// GreeterService provides greeting functionality
+service GreeterService {
+  // SayHello sends a greeting to the requested name
+  rpc SayHello(SayHelloRequest) returns (SayHelloResponse) {
+    option (google.api.http) = {
+      get: "/v1/greeter/{name}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Send a greeting"
+      description: "Send a greeting to the specified name"
+      tags: "Greeter"
+    };
+  }
+
+  // SayHelloStream streams greetings to the requested name
+  rpc SayHelloStream(SayHelloRequest) returns (stream SayHelloResponse) {}
+}
+
+// SayHelloRequest is the request for SayHello
+message SayHelloRequest {
+  // Name to greet
+  string name = 1;
+}
+
+// SayHelloResponse is the response from SayHello
+message SayHelloResponse {
+  // Greeting message
+  string message = 1;
+  // Timestamp of the greeting
+  int64 timestamp = 2;
+} 

@@ -1,0 +1,112 @@
+version: '3'
+
+tasks:
+  # Simple example tasks
+  simple:run:
+    desc: Run the simple example
+    dir: simple
+    cmds:
+      - go run main.go
+
+  simple:test-health:
+    desc: Test the health endpoint of the simple example
+    cmds:
+      - curl -s http://localhost:8000/health
+
+  simple:test-hello:
+    desc: Test the hello endpoint of the simple example
+    cmds:
+      - curl -s http://localhost:8000/hello/world | jq
+
+  simple:test-metrics:
+    desc: Test the metrics endpoint of the simple example
+    cmds:
+      - curl -s http://localhost:9090/metrics | grep -v "#" | grep -v "^$"
+
+  simple:test-pprof:
+    desc: Test the pprof endpoint of the simple example
+    cmds:
+      - curl -s http://localhost:6060/debug/pprof/
+
+  simple:test-all:
+    desc: Run all tests for the simple example
+    deps:
+      - simple:test-health
+      - simple:test-hello
+      - simple:test-metrics
+      - simple:test-pprof
+
+  # Advanced example tasks
+  advanced:run:
+    desc: Run the advanced example
+    dir: advanced
+    cmds:
+      - go run main.go
+
+  advanced:test-grpc:
+    desc: Test the gRPC endpoint of the advanced example (requires grpcurl)
+    cmds:
+      - |
+        if command -v grpcurl >/dev/null 2>&1; then
+          echo "Testing gRPC endpoint..."
+          grpcurl -plaintext -d '{"name": "World"}' localhost:50051 greeter.v1.GreeterService/SayHello
+        else
+          echo "grpcurl not found. Please install it to test gRPC endpoints."
+          echo "See: https://github.com/fullstorydev/grpcurl"
+        fi
+
+  advanced:test-http:
+    desc: Test the HTTP endpoint of the advanced example
+    cmds:
+      - curl -s http://localhost:8000/v1/greeter/World | jq
+
+  advanced:test-metrics:
+    desc: Test the metrics endpoint of the advanced example
+    cmds:
+      - curl -s http://localhost:9090/metrics | grep -v "#" | grep -v "^$" | grep "grpc_"
+
+  advanced:test-swagger:
+    desc: Check if the Swagger UI is available
+    cmds:
+      - curl -s -I http://localhost:8000/swagger/ | grep "200 OK"
+
+  advanced:test-pprof:
+    desc: Test the pprof endpoint of the advanced example
+    cmds:
+      - curl -s http://localhost:6060/debug/pprof/
+
+  advanced:test-all:
+    desc: Run all tests for the advanced example
+    cmds:
+      - ./advanced/test.sh
+
+  # Combined tasks
+  run:simple:
+    desc: Run the simple example in the background
+    cmds:
+      - task: simple:run
+        vars:
+          BACKGROUND: true
+
+  run:advanced:
+    desc: Run the advanced example in the background
+    cmds:
+      - task: advanced:run
+        vars:
+          BACKGROUND: true
+
+  test:all:
+    desc: Run all tests for both examples
+    deps:
+      - simple:test-all
+      - advanced:test-all
+
+  help:
+    desc: Show help
+    cmds:
+      - task -l
+
+  default:
+    desc: Show help
+    cmds:
+      - task -l
