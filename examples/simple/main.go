@@ -92,7 +92,7 @@ func main() {
 	}
 
 	// Create entrypoint
-	ep := netgex.New(opts...)
+	ep := netgex.NewServer(opts...)
 
 	// Log startup message
 	logger.Info("starting example service",

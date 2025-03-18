@@ -151,7 +151,7 @@ opts := []netgex.Option{
 }
 
 // Create server
-srv := netgex.New(opts...)
+srv := netgex.NewServer(opts...)
 
 // Run the server
 if err := srv.Run(ctx); err != nil {
@@ -217,7 +217,7 @@ func main() {
 	}
 
 	// Create server
-	srv := netgex.New(opts...)
+	srv := netgex.NewServer(opts...)
 
 	// Run the server
 	if err := srv.Run(ctx); err != nil {

@@ -27,7 +27,7 @@ func main() {
 	// export JSON_ALLOW_PARTIAL=true
 	// export JSON_MULTILINE=true
 	// export JSON_INDENT="    "
-	app := netgex.New(
+	app := netgex.NewServer(
 		netgex.WithLogger(logger),
 		netgex.WithJSONConfigFromEnv(),
 	)
@@ -42,13 +42,13 @@ func main() {
 		Indent:          "    ",
 	}
 
-	app = netgex.New(
+	app = netgex.NewServer(
 		netgex.WithLogger(logger),
 		netgex.WithJSONConfig(jsonConfig),
 	)
 
 	// Example 3: Using individual option functions
-	app = netgex.New(
+	app = netgex.NewServer(
 		netgex.WithLogger(logger),
 		netgex.WithJSONUseProtoNames(true),
 		netgex.WithJSONEmitUnpopulated(true),

@@ -52,8 +52,8 @@ type Server struct {
 	appVersion         string
 }
 
-// New creates a new Server with the given options
-func New(opts ...Option) *Server {
+// NewServer creates a new Server with the given options
+func NewServer(opts ...Option) *Server {
 	// Default values
 	s := &Server{
 		logger:          slog.Default(),

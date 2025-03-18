@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// Create entrypoint
-	ep := netgex.New(opts...)
+	ep := netgex.NewServer(opts...)
 
 	// Run the entrypoint
 	logger.Info("starting application")
