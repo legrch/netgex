@@ -8,7 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project setup
+- None
+
+## [1.0.0] - 2025-03-19
+
+### Added
+- Introduced a **dedicated configuration package** for `netgex` server. 
+- Added **unit tests** for configuration and gateway components.
+
+### Changed
+- Replaced `WithRegistrars` with `WithServices` for naming consistency.
+- Updated **import paths** to use `pkg/service` for better structure. 
+- Streamlined **server configuration** and improved option functions.
+- Updated **gateway import paths** and added a new server implementation. 
+- Enhanced **server initialization** and improved logging setup. 
+- Removed `server.go` and restructured server initialization logic. 
+- Updated `go.mod` dependencies and improved `Taskfile` commands.
+- Adjusted **mock generation commands** in `Taskfile`. 
+- Updated Swagger configuration to use a boolean flag. 
+- Simplified splash screen **configuration** and removed unused app details.
+- Enhanced **server tests** with error-handling scenarios
+- Improved **Taskfile linting** and tidy-up imports. 
+
+### Removed
+- Removed `server.go` and restructured **server initialization logic**.)
+- Removed **unused app name and version** from the splash screen. 
 
 ## [0.1.0] - 2024-03-19
 
