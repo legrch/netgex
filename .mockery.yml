@@ -1,0 +1,12 @@
+with-expecter: true
+dir: internal/mocks/{{ replaceAll .InterfaceDirRelative "internal" "" }}
+mockname: "{{.InterfaceName}}"
+outpkg: "{{.PackageName}}"
+filename: "{{ .InterfaceName | snakecase }}_mock.go"
+all: true
+recursive: true
+packages:
+  github.com/legrch/netgex:
+    config:
+      recursive: true
+      all: true

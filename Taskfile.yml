@@ -20,7 +20,7 @@ tasks:
       - go get -tool google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
       - go get -tool github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.19.1
       - go get -tool golang.org/x/tools/cmd/goimports@v0.20.0
-      - go get -tool github.com/vektra/mockery/v2@v2.36.0
+      - go get -tool github.com/vektra/mockery/v2@v2.53.3
       - go get -tool github.com/golang/mock/mockgen@v1.6.0
 
   # Install all tools in go.mod
@@ -29,6 +29,12 @@ tasks:
     cmds:
       - go install tool
 
+  # List all tools in go.mod
+  tools:list:
+    desc: List all tool dependencies in go.mod
+    cmds:
+      - grep -A 20 "^tool (" go.mod || echo "No tool dependencies found"
+      
   # Run specific tools using go tool
   lint:
     desc: Run golangci-lint
@@ -43,23 +49,10 @@ tasks:
     desc: Generate mocks using mockery
     cmds:
       - rm -rf internal/mocks
-      - mockery 
-    requires:
-      vars: [CLI_ARGS]
+      - mockery
       
   imports:
     desc: Format imports
     cmds:
       - goimports -w .
       
-  # List all tools in go.mod
-  tools:list:
-    desc: List all tool dependencies in go.mod
-    cmds:
-      - grep -A 20 "^// Tool dependencies" go.mod || echo "No tool dependencies found"
-
-  # Upgrade specific tools
-  tools:upgrade:
-    desc: Upgrade tools to latest compatible versions
-    cmds:
-      - go get -u -tool github.com/golangci/golangci-lint/cmd/golangci-lint@latest 
