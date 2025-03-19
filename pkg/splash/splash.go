@@ -12,9 +12,6 @@ type SplashOption func(*Splash)
 
 // Splash represents a splash screen for the application
 type Splash struct {
-	appName         string
-	appVersion      string
-	environment     string
 	hostname        string
 	goVersion       string
 	grpcAddress     string
@@ -35,9 +32,6 @@ func NewSplash(opts ...SplashOption) *Splash {
 
 	// Default values
 	s := &Splash{
-		appName:     "My Service",
-		appVersion:  "dev",
-		environment: "development",
 		hostname:    hostname,
 		goVersion:   runtime.Version(),
 		features:    []string{},
@@ -51,26 +45,6 @@ func NewSplash(opts ...SplashOption) *Splash {
 	return s
 }
 
-// WithAppName sets the application name for the splash screen
-func WithSplashAppName(name string) SplashOption {
-	return func(s *Splash) {
-		s.appName = name
-	}
-}
-
-// WithAppVersion sets the application version for the splash screen
-func WithSplashAppVersion(version string) SplashOption {
-	return func(s *Splash) {
-		s.appVersion = version
-	}
-}
-
-// WithEnvironment sets the environment for the splash screen
-func WithSplashEnvironment(env string) SplashOption {
-	return func(s *Splash) {
-		s.environment = env
-	}
-}
 
 // WithGRPCAddress sets the gRPC address for the splash screen
 func WithSplashGRPCAddress(address string) SplashOption {
@@ -118,36 +92,9 @@ func WithSplashFeature(feature string) SplashOption {
 //
 //nolint:gocyclo // This function is complex by nature
 func (s *Splash) String() string {
-	// Format application name - capitalize first letter and replace hyphens with spaces
-	formattedAppName := s.appName
-	if formattedAppName == "" {
-		formattedAppName = "Service"
-	} else {
-		// Replace hyphens with spaces
-		formattedAppName = strings.ReplaceAll(formattedAppName, "-", " ")
-
-		// Capitalize each word
-		words := strings.Fields(formattedAppName)
-		for i, word := range words {
-			if word != "" {
-				words[i] = strings.ToUpper(word[:1]) + word[1:]
-			}
-		}
-		formattedAppName = strings.Join(words, " ")
-	}
-
-	// Format version - ensure it's in the format v0.0.0
-	version := s.appVersion
-	if !strings.HasPrefix(version, "v") {
-		version = "v" + version
-	}
-
 	// Create a clean, frameless splash screen
 	splash := []string{
 		"",
-		fmt.Sprintf("🚀 %s %s", formattedAppName, version),
-		"",
-		fmt.Sprintf("🌐 Environment: %s", strings.ToUpper(s.environment)),
 		fmt.Sprintf("💻 Hostname: %s", s.hostname),
 		fmt.Sprintf("🔄 Go Version: %s", s.goVersion),
 		"",

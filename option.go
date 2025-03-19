@@ -142,17 +142,3 @@ func WithSwaggerBasePath(path string) Option {
 		s.cfg.SwaggerBasePath = path
 	}
 }
-
-// WithAppName sets the application name
-func WithAppName(name string) Option {
-	return func(s *Server) {
-		s.cfg.AppName = name
-	}
-}
-
-// WithAppVersion sets the application version
-func WithAppVersion(version string) Option {
-	return func(s *Server) {
-		s.cfg.AppVersion = version
-	}
-}

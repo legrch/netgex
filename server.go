@@ -178,8 +178,6 @@ func (s *Server) Run(ctx context.Context) error {
 // displaySplash initializes and displays the splash screen
 func (s *Server) displaySplash() {
 	splashOpts := []splash.SplashOption{
-		splash.WithSplashAppName(s.cfg.AppName),
-		splash.WithSplashAppVersion(s.cfg.AppVersion),
 		splash.WithSplashGRPCAddress(s.cfg.GRPCAddress),
 		splash.WithSplashHTTPAddress(s.cfg.HTTPAddress),
 		splash.WithSplashMetricsAddress(s.cfg.MetricsAddress),

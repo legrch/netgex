@@ -11,8 +11,6 @@ type Config struct {
 	// Core settings
 	LogLevel     string        `envconfig:"LOG_LEVEL" default:"info"`
 	CloseTimeout time.Duration `envconfig:"CLOSE_TIMEOUT" default:"10s"`
-	AppName      string        `envconfig:"APP_NAME" default:"Service"`
-	AppVersion   string        `envconfig:"APP_VERSION" default:"dev"`
 
 	// Server addresses
 	GRPCAddress    string `envconfig:"GRPC_ADDRESS" default:":9090"`
@@ -34,8 +32,6 @@ func NewConfig() *Config {
 	return &Config{
 		LogLevel:           "info",
 		CloseTimeout:       10 * time.Second,
-		AppName:            "Service",
-		AppVersion:         "dev",
 		GRPCAddress:        ":9090",
 		HTTPAddress:        ":8080",
 		MetricsAddress:     ":9091",
