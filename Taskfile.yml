@@ -33,6 +33,9 @@ tasks:
   lint:
     desc: Run golangci-lint
     cmds:
+      - go mod tidy
+      - go fmt ./...
+      - task: imports
       - go tool golangci-lint run ./...
       
   proto:

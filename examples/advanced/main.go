@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/legrch/netgex/server"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	
 	"github.com/rs/cors"
-
+	
+	"github.com/legrch/netgex/server"
 	"github.com/legrch/netgex/examples/advanced/service"
 )
 

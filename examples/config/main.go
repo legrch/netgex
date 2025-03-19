@@ -23,8 +23,6 @@ func main() {
 	cfg := &config.Config{
 		LogLevel:           "debug",
 		CloseTimeout:       10 * time.Second,
-		AppName:            "Service",
-		AppVersion:         "dev",
 		GRPCAddress:        ":9090",
 		HTTPAddress:        ":8080",
 		MetricsAddress:     ":9091",

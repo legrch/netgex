@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,12 +10,15 @@ import (
 	"strings"
 	"time"
 
+	
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
+	
+	"github.com/legrch/netgex/service"
 )
 
 // HeaderMatcherFunc is a function for matching headers in gRPC gateway
