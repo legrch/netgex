@@ -1,14 +1,14 @@
 package netgex
 
 import (
-	"github.com/legrch/netgex/pkg/service"
 	"log/slog"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/legrch/netgex/pkg/config"
+	"github.com/legrch/netgex/pkg/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
-
-	"github.com/legrch/netgex/internal/gateway"
 )
 
 // Option is a function that configures a Server
@@ -21,73 +21,17 @@ func WithLogger(logger *slog.Logger) Option {
 	}
 }
 
-// WithCloseTimeout sets the timeout for graceful shutdown
-func WithCloseTimeout(timeout time.Duration) Option {
+// WithConfig sets the configuration for the Server
+func WithConfig(config *config.Config) Option {
 	return func(s *Server) {
-		s.closeTimeout = timeout
+		s.cfg = config
 	}
 }
 
-// WithGRPCAddress sets the gRPC server address
-func WithGRPCAddress(address string) Option {
+// WithServices sets the service implementations
+func WithServices(services ...service.Registrar) Option {
 	return func(s *Server) {
-		s.grpcAddress = address
-	}
-}
-
-// WithHTTPAddress sets the HTTP server address
-func WithHTTPAddress(address string) Option {
-	return func(s *Server) {
-		s.httpAddress = address
-	}
-}
-
-// WithMetricsAddress sets the metrics server address
-func WithMetricsAddress(address string) Option {
-	return func(s *Server) {
-		s.metricsAddress = address
-	}
-}
-
-// WithPprofAddress sets the pprof server address
-func WithPprofAddress(address string) Option {
-	return func(s *Server) {
-		s.pprofAddress = address
-	}
-}
-
-// WithSwaggerDir sets the directory containing swagger files
-func WithSwaggerDir(dir string) Option {
-	return func(s *Server) {
-		s.swaggerDir = dir
-	}
-}
-
-// WithSwaggerBasePath sets the base path for swagger UI
-func WithSwaggerBasePath(path string) Option {
-	return func(s *Server) {
-		s.swaggerBasePath = path
-	}
-}
-
-// WithReflection enables or disables gRPC reflection
-func WithReflection(enabled bool) Option {
-	return func(s *Server) {
-		s.reflection = enabled
-	}
-}
-
-// WithHealthCheck enables or disables health checks
-func WithHealthCheck(enabled bool) Option {
-	return func(s *Server) {
-		s.healthCheck = enabled
-	}
-}
-
-// WithRegistrars sets the service registrars
-func WithRegistrars(registrars ...service.Registrar) Option {
-	return func(s *Server) {
-		s.registrars = registrars
+		s.services = services
 	}
 }
 
@@ -98,106 +42,117 @@ func WithProcesses(processes ...Process) Option {
 	}
 }
 
-// WithUnaryInterceptors sets the unary interceptors for the gRPC server
-func WithUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor) Option {
+// WithGRPCServerOptions sets additional options for the gRPC server
+func WithGRPCServerOptions(options ...grpc.ServerOption) Option {
 	return func(s *Server) {
-		s.unaryInterceptors = interceptors
+		s.grpcServerOptions = options
 	}
 }
 
-// WithStreamInterceptors sets the stream interceptors for the gRPC server
-func WithStreamInterceptors(interceptors ...grpc.StreamServerInterceptor) Option {
+// WithGRPCUnaryInterceptors sets the unary interceptors for the gRPC server
+func WithGRPCUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor) Option {
 	return func(s *Server) {
-		s.streamInterceptors = interceptors
+		s.grpcUnaryServerInterceptors = interceptors
 	}
 }
 
-// WithCORS enables CORS with the specified options
-func WithCORS(options *cors.Options) Option {
+// WithGRPCStreamInterceptors sets the stream interceptors for the gRPC server
+func WithGRPCStreamInterceptors(interceptors ...grpc.StreamServerInterceptor) Option {
 	return func(s *Server) {
-		s.corsEnabled = true
-		s.corsOptions = *options
+		s.grpcStreamServerInterceptors = interceptors
 	}
 }
 
-// WithJSONConfig sets the JSON configuration for the gateway
-func WithJSONConfig(config *gateway.JSONConfig) Option {
+// WithGatewayMuxOptions sets the ServeMux options for the gateway server
+func WithGatewayMuxOptions(options ...runtime.ServeMuxOption) Option {
 	return func(s *Server) {
-		s.jsonConfig = config
+		s.gwServerMuxOptions = options
 	}
 }
 
-// WithAppName sets the application name for the splash screen
+// WithGatewayCORS enables CORS with the specified options for the gateway
+func WithGatewayCORS(options cors.Options) Option {
+	return func(s *Server) {
+		s.gwCORSEnabled = true
+		s.gwCORSOptions = options
+	}
+}
+
+// Configuration shortcuts for common config fields
+
+// WithGRPCAddress sets the gRPC server address
+func WithGRPCAddress(address string) Option {
+	return func(s *Server) {
+		s.cfg.GRPCAddress = address
+	}
+}
+
+// WithHTTPAddress sets the HTTP server address
+func WithHTTPAddress(address string) Option {
+	return func(s *Server) {
+		s.cfg.HTTPAddress = address
+	}
+}
+
+// WithMetricsAddress sets the metrics server address
+func WithMetricsAddress(address string) Option {
+	return func(s *Server) {
+		s.cfg.MetricsAddress = address
+	}
+}
+
+// WithPprofAddress sets the pprof server address
+func WithPprofAddress(address string) Option {
+	return func(s *Server) {
+		s.cfg.PprofAddress = address
+	}
+}
+
+// WithCloseTimeout sets the timeout for graceful shutdown
+func WithCloseTimeout(timeout time.Duration) Option {
+	return func(s *Server) {
+		s.cfg.CloseTimeout = timeout
+	}
+}
+
+// WithReflection enables or disables gRPC reflection
+func WithReflection(enabled bool) Option {
+	return func(s *Server) {
+		s.cfg.ReflectionEnabled = enabled
+	}
+}
+
+// WithHealthCheck enables or disables health checks
+func WithHealthCheck(enabled bool) Option {
+	return func(s *Server) {
+		s.cfg.HealthCheckEnabled = enabled
+	}
+}
+
+// WithSwaggerDir sets the directory containing swagger files
+func WithSwaggerDir(dir string) Option {
+	return func(s *Server) {
+		s.cfg.SwaggerDir = dir
+	}
+}
+
+// WithSwaggerBasePath sets the base path for swagger UI
+func WithSwaggerBasePath(path string) Option {
+	return func(s *Server) {
+		s.cfg.SwaggerBasePath = path
+	}
+}
+
+// WithAppName sets the application name
 func WithAppName(name string) Option {
 	return func(s *Server) {
-		s.appName = name
+		s.cfg.AppName = name
 	}
 }
 
-// WithAppVersion sets the application version for the splash screen
+// WithAppVersion sets the application version
 func WithAppVersion(version string) Option {
 	return func(s *Server) {
-		s.appVersion = version
-	}
-}
-
-// JSONConfigFromEnv creates a JSONConfig from environment variables
-func JSONConfigFromEnv() *gateway.JSONConfig {
-	return &gateway.JSONConfig{
-		UseProtoNames:   getEnvBool("JSON_USE_PROTO_NAMES"),
-		EmitUnpopulated: getEnvBool("JSON_EMIT_UNPOPULATED"),
-		UseEnumNumbers:  getEnvBool("JSON_USE_ENUM_NUMBERS"),
-		AllowPartial:    getEnvBool("JSON_ALLOW_PARTIAL"),
-		Multiline:       getEnvBool("JSON_MULTILINE"),
-		Indent:          getEnv("JSON_INDENT", "  "),
-	}
-}
-
-// WithJSONConfigFromEnv sets the JSON configuration from environment variables
-func WithJSONConfigFromEnv() Option {
-	return func(s *Server) {
-		s.jsonConfig = JSONConfigFromEnv()
-	}
-}
-
-// WithJSONUseProtoNames sets whether to use proto names in JSON output
-func WithJSONUseProtoNames(useProtoNames bool) Option {
-	return func(s *Server) {
-		s.jsonConfig.UseProtoNames = useProtoNames
-	}
-}
-
-// WithJSONEmitUnpopulated sets whether to emit unpopulated fields in JSON output
-func WithJSONEmitUnpopulated(emitUnpopulated bool) Option {
-	return func(s *Server) {
-		s.jsonConfig.EmitUnpopulated = emitUnpopulated
-	}
-}
-
-// WithJSONUseEnumNumbers sets whether to use enum numbers in JSON output
-func WithJSONUseEnumNumbers(useEnumNumbers bool) Option {
-	return func(s *Server) {
-		s.jsonConfig.UseEnumNumbers = useEnumNumbers
-	}
-}
-
-// WithJSONAllowPartial sets whether to allow partial messages in JSON output
-func WithJSONAllowPartial(allowPartial bool) Option {
-	return func(s *Server) {
-		s.jsonConfig.AllowPartial = allowPartial
-	}
-}
-
-// WithJSONMultiline sets whether to use multiline formatting in JSON output
-func WithJSONMultiline(multiline bool) Option {
-	return func(s *Server) {
-		s.jsonConfig.Multiline = multiline
-	}
-}
-
-// WithJSONIndent sets the indentation to use in multiline JSON output
-func WithJSONIndent(indent string) Option {
-	return func(s *Server) {
-		s.jsonConfig.Indent = indent
+		s.cfg.AppVersion = version
 	}
 }

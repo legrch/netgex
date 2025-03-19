@@ -3,15 +3,17 @@ package netgex
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/legrch/netgex/internal/gateway"
 	"github.com/legrch/netgex/internal/metrics"
 	"github.com/legrch/netgex/internal/pprof"
+	"github.com/legrch/netgex/pkg/config"
 	"github.com/legrch/netgex/pkg/service"
-	splash2 "github.com/legrch/netgex/pkg/splash"
-	"log/slog"
-	"os"
-	"time"
+	"github.com/legrch/netgex/pkg/splash"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 
@@ -33,45 +35,21 @@ type Process interface {
 
 // Server represents the main entry point for the application
 type Server struct {
-	logger             *slog.Logger
-	closeTimeout       time.Duration
-	grpcAddress        string
-	httpAddress        string
-	metricsAddress     string
-	pprofAddress       string
-	swaggerDir         string
-	swaggerBasePath    string
-	reflection         bool
-	healthCheck        bool
-	registrars         []service.Registrar
-	processes          []Process
-	unaryInterceptors  []grpc.UnaryServerInterceptor
-	streamInterceptors []grpc.StreamServerInterceptor
-	corsOptions        cors.Options
-	corsEnabled        bool
-	jsonConfig         *gateway.JSONConfig
-	appName            string
-	appVersion         string
+	cfg                          *config.Config
+	processes                    []Process
+	logger                       *slog.Logger
+	services                     []service.Registrar
+	grpcServerOptions            []grpc.ServerOption
+	grpcUnaryServerInterceptors  []grpc.UnaryServerInterceptor
+	grpcStreamServerInterceptors []grpc.StreamServerInterceptor
+	gwServerMuxOptions           []runtime.ServeMuxOption
+	gwCORSEnabled                bool
+	gwCORSOptions                cors.Options
 }
 
 // NewServer creates a new Server with the given options
 func NewServer(opts ...Option) *Server {
-	// Default values
-	s := &Server{
-		logger:          slog.Default(),
-		closeTimeout:    10 * time.Second,
-		grpcAddress:     getEnv("GRPC_ADDRESS", ":9090"),
-		httpAddress:     getEnv("HTTP_ADDRESS", ":8080"),
-		metricsAddress:  getEnv("METRICS_ADDRESS", ":9091"),
-		pprofAddress:    getEnv("PPROF_ADDRESS", ":6060"),
-		swaggerDir:      getEnv("SWAGGER_DIR", "./api"),
-		swaggerBasePath: getEnv("SWAGGER_BASE_PATH", "/"),
-		reflection:      getEnvBool("REFLECTION_ENABLED"),
-		healthCheck:     true,
-		jsonConfig:      gateway.DefaultJSONConfig(),
-		appName:         getEnv("PROJECT_NAME", "Service"),
-		appVersion:      getEnv("VERSION", "dev"),
-	}
+	s := &Server{}
 
 	// Apply options
 	for _, opt := range opts {
@@ -88,39 +66,46 @@ func (s *Server) Run(ctx context.Context) error {
 	// Create gRPC server
 	grpcServer := grpcserver.NewServer(
 		s.logger,
-		s.closeTimeout,
-		s.grpcAddress,
-		grpcserver.WithRegistrars(s.registrars...),
-		grpcserver.WithUnaryInterceptors(s.unaryInterceptors...),
-		grpcserver.WithStreamInterceptors(s.streamInterceptors...),
-		grpcserver.WithReflection(s.reflection),
-		grpcserver.WithHealthCheck(s.healthCheck),
+		s.cfg.CloseTimeout,
+		s.cfg.GRPCAddress,
+		grpcserver.WithRegistrars(s.services...),
+		grpcserver.WithUnaryInterceptors(s.grpcUnaryServerInterceptors...),
+		grpcserver.WithStreamInterceptors(s.grpcStreamServerInterceptors...),
+		grpcserver.WithReflection(s.cfg.ReflectionEnabled),
+		grpcserver.WithHealthCheck(s.cfg.HealthCheckEnabled),
+		grpcserver.WithOptions(s.grpcServerOptions...),
 	)
 
 	// Create gateway server
 	gatewayOpts := []gateway.Option{
-		gateway.WithRegistrars(s.registrars...),
-		gateway.WithJSONConfig(s.jsonConfig),
+		gateway.WithRegistrars(s.services...),
 	}
 
-	if s.corsEnabled {
-		gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.corsOptions))
+	// Add mux options if provided
+	if len(s.gwServerMuxOptions) > 0 {
+		gatewayOpts = append(gatewayOpts, gateway.WithMuxOptions(s.gwServerMuxOptions...))
 	}
 
-	if s.swaggerDir != "" {
-		gatewayOpts = append(gatewayOpts, gateway.WithSwagger(s.swaggerDir, s.swaggerBasePath))
+	// Add CORS if enabled
+	if s.gwCORSEnabled {
+		gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.gwCORSOptions))
+	}
+
+	// Add swagger if configured
+	if s.cfg.SwaggerDir != "" {
+		gatewayOpts = append(gatewayOpts, gateway.WithSwagger(s.cfg.SwaggerDir, s.cfg.SwaggerBasePath))
 	}
 
 	gatewayServer := gateway.NewServer(
 		s.logger,
-		s.closeTimeout,
-		s.grpcAddress,
-		s.httpAddress,
+		s.cfg.CloseTimeout,
+		s.cfg.GRPCAddress,
+		s.cfg.HTTPAddress,
 		gatewayOpts...,
 	)
 
-	metricsServer := metrics.NewServer(s.logger, s.metricsAddress, s.closeTimeout)
-	pprofServer := pprof.NewServer(s.logger, s.pprofAddress)
+	metricsServer := metrics.NewServer(s.logger, s.cfg.MetricsAddress, s.cfg.CloseTimeout)
+	pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
 
 	// Add servers to processes
 	processes := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
@@ -165,7 +150,7 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	// Create shutdown context
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.closeTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.cfg.CloseTimeout)
 	defer cancel()
 
 	// Shutdown all processes in reverse order
@@ -185,47 +170,32 @@ func (s *Server) Run(ctx context.Context) error {
 
 // displaySplash initializes and displays the splash screen
 func (s *Server) displaySplash() {
-	splashOpts := []splash2.SplashOption{
-		splash2.WithSplashAppName(s.appName),
-		splash2.WithSplashAppVersion(s.appVersion),
-		splash2.WithSplashGRPCAddress(s.grpcAddress),
-		splash2.WithSplashHTTPAddress(s.httpAddress),
-		splash2.WithSplashMetricsAddress(s.metricsAddress),
-		splash2.WithSplashPprofAddress(s.pprofAddress),
+	splashOpts := []splash.SplashOption{
+		splash.WithSplashAppName(s.cfg.AppName),
+		splash.WithSplashAppVersion(s.cfg.AppVersion),
+		splash.WithSplashGRPCAddress(s.cfg.GRPCAddress),
+		splash.WithSplashHTTPAddress(s.cfg.HTTPAddress),
+		splash.WithSplashMetricsAddress(s.cfg.MetricsAddress),
+		splash.WithSplashPprofAddress(s.cfg.PprofAddress),
 	}
 
 	// Add features
-	if s.reflection {
-		splashOpts = append(splashOpts, splash2.WithSplashFeature("gRPC Reflection"))
+	if s.cfg.ReflectionEnabled {
+		splashOpts = append(splashOpts, splash.WithSplashFeature("gRPC Reflection"))
 	}
-	if s.healthCheck {
-		splashOpts = append(splashOpts, splash2.WithSplashFeature("Health Checks"))
+	if s.cfg.HealthCheckEnabled {
+		splashOpts = append(splashOpts, splash.WithSplashFeature("Health Checks"))
 	}
-	if s.corsEnabled {
-		splashOpts = append(splashOpts, splash2.WithSplashFeature("CORS"))
+	if s.gwCORSEnabled {
+		splashOpts = append(splashOpts, splash.WithSplashFeature("CORS"))
 	}
 
 	// Add swagger if enabled
-	if s.swaggerDir != "" {
-		splashOpts = append(splashOpts, splash2.WithSplashSwaggerBasePath(s.swaggerBasePath))
+	if s.cfg.SwaggerDir != "" {
+		splashOpts = append(splashOpts, splash.WithSplashSwaggerBasePath(s.cfg.SwaggerBasePath))
 	}
 
 	// Create and display splash
-	splash := splash2.NewSplash(splashOpts...)
+	splash := splash.NewSplash(splashOpts...)
 	splash.Display()
-}
-
-// Helper functions for environment variables
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
-}
-
-func getEnvBool(key string) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		return value == "true" || value == "1" || value == "yes"
-	}
-	return true
 }

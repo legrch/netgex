@@ -37,13 +37,13 @@ func main() {
 	// Create entrypoint options
 	opts := []netgex.Option{
 		netgex.WithLogger(logger),
-		netgex.WithRegistrars(greeterService),
+		netgex.WithServices(greeterService),
 		netgex.WithCloseTimeout(5 * time.Second),
 		netgex.WithGRPCAddress(":50051"),
 		netgex.WithHTTPAddress(":8080"),
 		netgex.WithReflection(true),
 		netgex.WithHealthCheck(true),
-		netgex.WithCORS(&corsOptions),
+		netgex.WithGatewayCORS(corsOptions),
 		netgex.WithSwaggerDir("./api/swagger"),
 		netgex.WithSwaggerBasePath("/api"),
 	}
