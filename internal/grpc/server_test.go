@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	mocksvc "github.com/legrch/netgex/internal/mocks/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,36 +17,29 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// mockServiceRegistrar implements service.Registrar
-type mockServiceRegistrar struct {
-	mock.Mock
-}
-
-func (m *mockServiceRegistrar) RegisterGRPC(srv *grpc.Server) {
-	m.Called(srv)
-}
-
-func (m *mockServiceRegistrar) RegisterHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-	args := m.Called(ctx, mux, endpoint, opts)
-	return args.Error(0)
-}
-
 func TestNewServer(t *testing.T) {
 	// Arrange
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	closeTimeout := 5 * time.Second
 	address := ":50051"
+	serviceRegistrar := mocksvc.NewRegistrar(t)
 
 	// Act
-	srv := NewServer(logger, closeTimeout, address)
+	server := NewServer(
+		logger,
+		closeTimeout,
+		address,
+		WithServices(serviceRegistrar),
+	)
 
 	// Assert
-	assert.NotNil(t, srv)
-	assert.Equal(t, logger, srv.logger)
-	assert.Equal(t, closeTimeout, srv.closeTimeout)
-	assert.Equal(t, address, srv.address)
-	assert.False(t, srv.reflectionEnabled)
-	assert.True(t, srv.healthCheckEnabled)
+	assert.NotNil(t, server)
+	assert.Equal(t, logger, server.logger)
+	assert.Equal(t, closeTimeout, server.closeTimeout)
+	assert.Equal(t, address, server.address)
+	assert.Len(t, server.registrars, 1)
+	assert.False(t, server.reflectionEnabled)
+	assert.True(t, server.healthCheckEnabled)
 }
 
 func TestNewServerWithOptions(t *testing.T) {
@@ -55,38 +48,38 @@ func TestNewServerWithOptions(t *testing.T) {
 	closeTimeout := 5 * time.Second
 	address := ":50051"
 
-	registrar := new(mockServiceRegistrar)
+	registrar := mocksvc.NewRegistrar(t)
 
-	interceptor1 := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	unaryInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		return handler(ctx, req)
 	}
 
-	interceptor2 := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	streamInterceptor := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		return handler(srv, ss)
 	}
 
 	// Act
-	srv := NewServer(
+	server := NewServer(
 		logger,
 		closeTimeout,
 		address,
 		WithServices(registrar),
-		WithUnaryInterceptors(interceptor1),
-		WithStreamInterceptors(interceptor2),
+		WithUnaryInterceptors(unaryInterceptor),
+		WithStreamInterceptors(streamInterceptor),
 		WithReflection(true),
 		WithHealthCheck(false),
 	)
 
 	// Assert
-	assert.NotNil(t, srv)
-	assert.Equal(t, logger, srv.logger)
-	assert.Equal(t, closeTimeout, srv.closeTimeout)
-	assert.Equal(t, address, srv.address)
-	assert.True(t, srv.reflectionEnabled)
-	assert.False(t, srv.healthCheckEnabled)
-	assert.Len(t, srv.registrars, 1)
-	assert.Len(t, srv.unaryInterceptors, 1)
-	assert.Len(t, srv.streamInterceptors, 1)
+	assert.NotNil(t, server)
+	assert.Equal(t, logger, server.logger)
+	assert.Equal(t, closeTimeout, server.closeTimeout)
+	assert.Equal(t, address, server.address)
+	assert.Len(t, server.registrars, 1)
+	assert.Len(t, server.unaryInterceptors, 1)
+	assert.Len(t, server.streamInterceptors, 1)
+	assert.True(t, server.reflectionEnabled)
+	assert.False(t, server.healthCheckEnabled)
 }
 
 func TestServer_PreRun(t *testing.T) {
@@ -95,11 +88,11 @@ func TestServer_PreRun(t *testing.T) {
 	closeTimeout := 5 * time.Second
 	address := ":50051"
 
-	registrar1 := new(mockServiceRegistrar)
-	registrar1.On("RegisterGRPC", mock.Anything).Return()
+	registrar1 := mocksvc.NewRegistrar(t)
+	registrar1.EXPECT().RegisterGRPC(mock.Anything).Return()
 
-	registrar2 := new(mockServiceRegistrar)
-	registrar2.On("RegisterGRPC", mock.Anything).Return()
+	registrar2 := mocksvc.NewRegistrar(t)
+	registrar2.EXPECT().RegisterGRPC(mock.Anything).Return()
 
 	// Act
 	srv := NewServer(
@@ -107,17 +100,12 @@ func TestServer_PreRun(t *testing.T) {
 		closeTimeout,
 		address,
 		WithServices(registrar1, registrar2),
-		WithReflection(true),
-		WithHealthCheck(true),
 	)
-
 	err := srv.PreRun(context.Background())
 
 	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, srv.server)
-	registrar1.AssertExpectations(t)
-	registrar2.AssertExpectations(t)
 }
 
 func TestServer_RunAndShutdown(t *testing.T) {
@@ -136,11 +124,16 @@ func TestServer_RunAndShutdown(t *testing.T) {
 	address := listener.Addr().String()
 	listener.Close() // Close so the server can use it
 
+	// Create service registrar mock
+	registrar := mocksvc.NewRegistrar(t)
+	registrar.EXPECT().RegisterGRPC(mock.Anything).Return()
+
 	// Create server
 	srv := NewServer(
 		logger,
 		closeTimeout,
 		address,
+		WithServices(registrar),
 		WithHealthCheck(true),
 	)
 

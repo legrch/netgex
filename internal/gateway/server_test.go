@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	mocksvc "github.com/legrch/netgex/internal/mocks/service"
+	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,35 +36,38 @@ func TestNewServer(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	closeTimeout := 5 * time.Second
 	grpcAddress := ":50051"
-	httpAddress := ":8081"
+	httpAddress := ":8080"
 
 	// Act
-	srv := NewServer(logger, closeTimeout, grpcAddress, httpAddress)
+	server := NewServer(logger, closeTimeout, grpcAddress, httpAddress)
 
 	// Assert
-	assert.NotNil(t, srv)
-	assert.Equal(t, logger, srv.logger)
-	assert.Equal(t, closeTimeout, srv.closeTimeout)
-	assert.Equal(t, grpcAddress, srv.grpcAddress)
-	assert.Equal(t, httpAddress, srv.httpAddress)
-	assert.Equal(t, httpAddress, srv.server.Addr)
-	assert.NotNil(t, srv.jsonConfig)
+	assert.NotNil(t, server)
+	assert.Equal(t, logger, server.logger)
+	assert.Equal(t, closeTimeout, server.closeTimeout)
+	assert.Equal(t, grpcAddress, server.grpcAddress)
+	assert.Equal(t, httpAddress, server.httpAddress)
+	assert.Equal(t, httpAddress, server.server.Addr)
+	assert.NotNil(t, server.jsonConfig)
 }
 
 func TestWithServices(t *testing.T) {
 	// Arrange
-	srv := &Server{}
-	svc1 := new(mockServiceRegistrar)
-	svc2 := new(mockServiceRegistrar)
+	server := &Server{
+		registrars: []service.Registrar{},
+	}
+
+	// Create mocks
+	svc1 := mocksvc.NewRegistrar(t)
+	svc2 := mocksvc.NewRegistrar(t)
 
 	// Act
-	opt := WithServices(svc1, svc2)
-	opt(srv)
+	WithServices(svc1, svc2)(server)
 
 	// Assert
-	assert.Len(t, srv.registrars, 2)
-	assert.Contains(t, srv.registrars, svc1)
-	assert.Contains(t, srv.registrars, svc2)
+	assert.Len(t, server.registrars, 2)
+	assert.Contains(t, server.registrars, svc1)
+	assert.Contains(t, server.registrars, svc2)
 }
 
 func TestWithMuxOptions(t *testing.T) {

@@ -16,19 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockLogger is a mock implementation of the slog.Logger
-type mockLogger struct {
-	mock.Mock
-}
-
-func (m *mockLogger) Info(msg string, args ...any) {
-	m.Called(msg, args)
-}
-
-func (m *mockLogger) Error(msg string, args ...any) {
-	m.Called(msg, args)
-}
-
 // mockProcessWithExpectations is a mock implementation of the Process interface
 type mockProcessWithExpectations struct {
 	mock.Mock
