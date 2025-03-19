@@ -63,11 +63,11 @@ func NewServer(opts ...Option) *Server {
 
 // Run starts the Server and all its processes
 func (s *Server) Run(ctx context.Context) error {
-	
+
 	if s.logger == nil {
 		s.logger = slog.Default()
 	}
-	
+
 	s.logger.Info("starting application")
 
 	// Create gRPC server
@@ -75,7 +75,7 @@ func (s *Server) Run(ctx context.Context) error {
 		s.logger,
 		s.cfg.CloseTimeout,
 		s.cfg.GRPCAddress,
-		grpcserver.WithRegistrars(s.services...),
+		grpcserver.WithServices(s.services...),
 		grpcserver.WithUnaryInterceptors(s.grpcUnaryServerInterceptors...),
 		grpcserver.WithStreamInterceptors(s.grpcStreamServerInterceptors...),
 		grpcserver.WithReflection(s.cfg.ReflectionEnabled),
@@ -85,7 +85,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	// Create gateway server
 	gatewayOpts := []gateway.Option{
-		gateway.WithRegistrars(s.services...),
+		gateway.WithServices(s.services...),
 	}
 
 	// Add mux options if provided

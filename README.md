@@ -87,7 +87,7 @@ server := grpc.NewServer(
 	logger,
 	5*time.Second,
 	":50051",
-	grpc.WithRegistrars(myService),
+	grpc.WithServices(myService),
 	grpc.WithUnaryInterceptors(
 		grpc_recovery.UnaryServerInterceptor(),
 		grpc_prometheus.UnaryServerInterceptor,
@@ -118,7 +118,7 @@ gateway := gateway.NewServer(
 	5*time.Second,
 	":50051",  // gRPC server address
 	":8080",   // HTTP server address
-	gateway.WithRegistrars(myService),
+	gateway.WithServices(myService),
 	gateway.WithCORS(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -139,7 +139,7 @@ The `netgex.Server` provides a unified way to initialize and run your applicatio
 // Create server options
 opts := []netgex.Option{
 	netgex.WithLogger(logger),
-	netgex.WithRegistrars(myService),
+	netgex.WithServices(myService),
 	netgex.WithCloseTimeout(5 * time.Second),
 	netgex.WithGRPCAddress(":50051"),
 	netgex.WithHTTPAddress(":8080"),
@@ -205,7 +205,7 @@ func main() {
 	// Create server options
 	opts := []netgex.Option{
 		netgex.WithLogger(logger),
-		netgex.WithRegistrars(myService),
+		netgex.WithServices(myService),
 		netgex.WithCloseTimeout(5 * time.Second),
 		netgex.WithGRPCAddress(":50051"),
 		netgex.WithHTTPAddress(":8080"),
@@ -264,7 +264,7 @@ The server package provides the following configuration options:
 - `WithSwaggerBasePath(path string)` - Sets the base path for swagger UI
 - `WithReflection(enabled bool)` - Enables or disables gRPC reflection
 - `WithHealthCheck(enabled bool)` - Enables or disables health checks
-- `WithRegistrars(registrars ...service.Registrar)` - Sets the service registrars
+- `WithServices(registrars ...service.Registrar)` - Sets the service registrars
 - `WithProcesses(processes ...Process)` - Adds additional processes to the server
 - `WithUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor)` - Sets the unary interceptors for the gRPC server
 - `WithStreamInterceptors(interceptors ...grpc.StreamServerInterceptor)` - Sets the stream interceptors for the gRPC server

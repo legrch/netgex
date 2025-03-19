@@ -3,13 +3,14 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/pkg/service"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/legrch/netgex/pkg/service"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
@@ -72,8 +73,8 @@ func NewServer(
 	return s
 }
 
-// WithRegistrars sets the service registrars for the gateway
-func WithRegistrars(registrars ...service.Registrar) Option {
+// WithServices sets the service registrars for the gateway
+func WithServices(registrars ...service.Registrar) Option {
 	return func(s *Server) {
 		s.registrars = append(s.registrars, registrars...)
 	}

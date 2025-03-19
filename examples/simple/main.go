@@ -88,7 +88,7 @@ func main() {
 		netgex.WithPprofAddress(":6060"),
 		netgex.WithCloseTimeout(5 * time.Second),
 		netgex.WithReflection(true),
-		netgex.WithRegistrars(service),
+		netgex.WithServices(service),
 	}
 
 	// Create entrypoint

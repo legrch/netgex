@@ -3,10 +3,11 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/pkg/service"
 	"log/slog"
 	"net"
 	"time"
+
+	"github.com/legrch/netgex/pkg/service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -54,8 +55,8 @@ func NewServer(
 	return s
 }
 
-// WithRegistrars sets the service registrars for the gRPC server
-func WithRegistrars(registrars ...service.Registrar) Option {
+// WithServices sets the service registrars for the gRPC server
+func WithServices(registrars ...service.Registrar) Option {
 	return func(s *Server) {
 		s.registrars = append(s.registrars, registrars...)
 	}
