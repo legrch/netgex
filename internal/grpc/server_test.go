@@ -154,7 +154,7 @@ func TestServer_RunAndShutdown(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Test connection by checking health
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	defer conn.Close()
 

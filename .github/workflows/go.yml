@@ -40,5 +40,4 @@ jobs:
       with:
         version: v1.58.1
         args: --config=.golangci-lint.yml
-        only-new-issues: true
         install-mode: binary 
