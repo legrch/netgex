@@ -4,11 +4,10 @@ import (
 	"log/slog"
 	"time"
 
-	
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
-	
+
 	"github.com/legrch/netgex/config"
 	"github.com/legrch/netgex/service"
 )

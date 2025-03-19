@@ -8,11 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	
 	"github.com/rs/cors"
-	
-	"github.com/legrch/netgex/server"
+
 	"github.com/legrch/netgex/examples/advanced/service"
+	"github.com/legrch/netgex/server"
 )
 
 func main() {

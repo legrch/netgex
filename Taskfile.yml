@@ -14,7 +14,7 @@ tasks:
   tools:setup:
     desc: Set up tool dependencies in go.mod
     cmds:
-      - go get -tool github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.2
+      - go get -tool github.com/golangci/golangci-lint/cmd/golangci-lint@v1.58.1
       - go get -tool github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.19.1
       - go get -tool google.golang.org/protobuf/cmd/protoc-gen-go@v1.32.0
       - go get -tool google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
@@ -36,37 +36,37 @@ tasks:
       - go mod tidy
       - go fmt ./...
       - task: imports
-      - go tool golangci-lint run ./...
+      - golangci-lint run ./...
       
-  proto:
-    desc: Generate code from proto files
-    dir: api/proto
-    cmds:
-      - go tool protoc-gen-go --proto_path=. --go_out=. --go_opt=paths=source_relative v1/*.proto
-      - go tool protoc-gen-go-grpc --proto_path=. --go-grpc_out=. --go-grpc_opt=paths=source_relative v1/*.proto
-      - go tool protoc-gen-grpc-gateway --proto_path=. --grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative v1/*.proto
-      - go tool protoc-gen-openapiv2 --proto_path=. --openapiv2_out=../openapi --openapiv2_opt=logtostderr=true v1/*.proto
-      
+   
   mock:mockery:
     desc: Generate mocks using mockery
     cmds:
       - rm -rf internal/mocks
-      - go tool mockery --dir=pkg --output=internal/mocks --all --case=snake
+      - mockery --dir=pkg --output=internal/mocks --all --case=snake
       
   mock:mockgen:
     desc: Generate mocks using mockgen
     cmds:
-      - go tool mockgen -destination=internal/mocks/{{.CLI_ARGS}}_mock.go github.com/legrch/netgex/pkg/{{.CLI_ARGS}} {{.CLI_ARGS}}
+      # - mockgen -destination=internal/mocks/{{.CLI_ARGS}}_mock.go github.com/legrch/netgex/pkg/{{.CLI_ARGS}} {{.CLI_ARGS}}
+      - rm -rf internal/mocks
+      - mockery 
     requires:
       vars: [CLI_ARGS]
       
   imports:
     desc: Format imports
     cmds:
-      - go tool goimports -w .
+      - goimports -w .
       
   # List all tools in go.mod
   tools:list:
     desc: List all tool dependencies in go.mod
     cmds:
-      - grep -A 20 "^// Tool dependencies" go.mod || echo "No tool dependencies found" 
+      - grep -A 20 "^// Tool dependencies" go.mod || echo "No tool dependencies found"
+
+  # Upgrade specific tools
+  tools:upgrade:
+    desc: Upgrade tools to latest compatible versions
+    cmds:
+      - go get -u -tool github.com/golangci/golangci-lint/cmd/golangci-lint@latest 
