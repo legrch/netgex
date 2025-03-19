@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/legrch/netgex"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/legrch/netgex/server"
 )
 
 // ExampleService is a simple implementation adapter for demonstration purposes
@@ -80,19 +81,19 @@ func main() {
 	service := &ExampleService{}
 
 	// Create entrypoint options
-	opts := []netgex.Option{
-		netgex.WithLogger(logger),
-		netgex.WithGRPCAddress(":50051"),
-		netgex.WithHTTPAddress(":8000"),
-		netgex.WithMetricsAddress(":9090"),
-		netgex.WithPprofAddress(":6060"),
-		netgex.WithCloseTimeout(5 * time.Second),
-		netgex.WithReflection(true),
-		netgex.WithRegistrars(service),
+	opts := []server.Option{
+		server.WithLogger(logger),
+		server.WithGRPCAddress(":50051"),
+		server.WithHTTPAddress(":8000"),
+		server.WithMetricsAddress(":9090"),
+		server.WithPprofAddress(":6060"),
+		server.WithCloseTimeout(5 * time.Second),
+		server.WithReflection(true),
+		server.WithServices(service),
 	}
 
 	// Create entrypoint
-	ep := netgex.NewServer(opts...)
+	ep := server.NewServer(opts...)
 
 	// Log startup message
 	logger.Info("starting example service",

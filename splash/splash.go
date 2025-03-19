@@ -1,4 +1,4 @@
-package netgex
+package splash
 
 import (
 	"fmt"
@@ -12,15 +12,13 @@ type SplashOption func(*Splash)
 
 // Splash represents a splash screen for the application
 type Splash struct {
-	appName         string
-	appVersion      string
-	environment     string
 	hostname        string
 	goVersion       string
 	grpcAddress     string
 	httpAddress     string
 	metricsAddress  string
 	pprofAddress    string
+	swaggerEnabled  bool
 	swaggerBasePath string
 	features        []string
 }
@@ -35,12 +33,9 @@ func NewSplash(opts ...SplashOption) *Splash {
 
 	// Default values
 	s := &Splash{
-		appName:     getEnv("PROJECT_NAME", "My Service"),
-		appVersion:  getEnv("VERSION", "dev"),
-		environment: getEnv("ENVIRONMENT", "development"),
-		hostname:    hostname,
-		goVersion:   runtime.Version(),
-		features:    []string{},
+		hostname:  hostname,
+		goVersion: runtime.Version(),
+		features:  []string{},
 	}
 
 	// Apply options
@@ -51,64 +46,44 @@ func NewSplash(opts ...SplashOption) *Splash {
 	return s
 }
 
-// WithAppName sets the application name for the splash screen
-func WithSplashAppName(name string) SplashOption {
-	return func(s *Splash) {
-		s.appName = name
-	}
-}
-
-// WithAppVersion sets the application version for the splash screen
-func WithSplashAppVersion(version string) SplashOption {
-	return func(s *Splash) {
-		s.appVersion = version
-	}
-}
-
-// WithEnvironment sets the environment for the splash screen
-func WithSplashEnvironment(env string) SplashOption {
-	return func(s *Splash) {
-		s.environment = env
-	}
-}
-
 // WithGRPCAddress sets the gRPC address for the splash screen
-func WithSplashGRPCAddress(address string) SplashOption {
+func WithGRPCAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.grpcAddress = address
 	}
 }
 
 // WithHTTPAddress sets the HTTP address for the splash screen
-func WithSplashHTTPAddress(address string) SplashOption {
+func WithHTTPAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.httpAddress = address
 	}
 }
 
 // WithMetricsAddress sets the metrics address for the splash screen
-func WithSplashMetricsAddress(address string) SplashOption {
+func WithMetricsAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.metricsAddress = address
 	}
 }
 
 // WithPprofAddress sets the pprof address for the splash screen
-func WithSplashPprofAddress(address string) SplashOption {
+func WithPprofAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.pprofAddress = address
 	}
 }
 
 // WithSwaggerBasePath sets the swagger base path for the splash screen
-func WithSplashSwaggerBasePath(path string) SplashOption {
+func WithSwaggerBasePath(path string) SplashOption {
 	return func(s *Splash) {
+		s.swaggerEnabled = true
 		s.swaggerBasePath = path
 	}
 }
 
 // WithFeature adds a feature to the splash screen
-func WithSplashFeature(feature string) SplashOption {
+func WithFeature(feature string) SplashOption {
 	return func(s *Splash) {
 		s.features = append(s.features, feature)
 	}
@@ -118,36 +93,9 @@ func WithSplashFeature(feature string) SplashOption {
 //
 //nolint:gocyclo // This function is complex by nature
 func (s *Splash) String() string {
-	// Format application name - capitalize first letter and replace hyphens with spaces
-	formattedAppName := s.appName
-	if formattedAppName == "" {
-		formattedAppName = "Service"
-	} else {
-		// Replace hyphens with spaces
-		formattedAppName = strings.ReplaceAll(formattedAppName, "-", " ")
-
-		// Capitalize each word
-		words := strings.Fields(formattedAppName)
-		for i, word := range words {
-			if word != "" {
-				words[i] = strings.ToUpper(word[:1]) + word[1:]
-			}
-		}
-		formattedAppName = strings.Join(words, " ")
-	}
-
-	// Format version - ensure it's in the format v0.0.0
-	version := s.appVersion
-	if !strings.HasPrefix(version, "v") {
-		version = "v" + version
-	}
-
 	// Create a clean, frameless splash screen
 	splash := []string{
 		"",
-		fmt.Sprintf("🚀 %s %s", formattedAppName, version),
-		"",
-		fmt.Sprintf("🌐 Environment: %s", strings.ToUpper(s.environment)),
 		fmt.Sprintf("💻 Hostname: %s", s.hostname),
 		fmt.Sprintf("🔄 Go Version: %s", s.goVersion),
 		"",
@@ -174,7 +122,7 @@ func (s *Splash) String() string {
 		}
 
 		// Add Swagger information if enabled
-		if s.httpAddress != "" {
+		if s.swaggerEnabled {
 			// Extract port from HTTP address
 			port := strings.TrimPrefix(s.httpAddress, ":")
 

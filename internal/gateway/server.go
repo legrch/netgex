@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,6 +16,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/legrch/netgex/service"
 )
 
 // HeaderMatcherFunc is a function for matching headers in gRPC gateway
@@ -39,6 +40,7 @@ type Server struct {
 	corsEnabled           bool
 	corsOptions           cors.Options
 	pprofEnabled          bool
+	swaggerEnabled        bool
 	swaggerDir            string
 	swaggerBasePath       string
 	jsonConfig            *JSONConfig
@@ -72,8 +74,8 @@ func NewServer(
 	return s
 }
 
-// WithRegistrars sets the service registrars for the gateway
-func WithRegistrars(registrars ...service.Registrar) Option {
+// WithServices sets the service registrars for the gateway
+func WithServices(registrars ...service.Registrar) Option {
 	return func(s *Server) {
 		s.registrars = append(s.registrars, registrars...)
 	}
@@ -118,6 +120,7 @@ func WithPprof(enabled bool) Option {
 // WithSwagger enables Swagger UI
 func WithSwagger(dir, basePath string) Option {
 	return func(s *Server) {
+		s.swaggerEnabled = true
 		s.swaggerDir = dir
 		s.swaggerBasePath = basePath
 	}
@@ -178,7 +181,7 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	// Add Swagger UI if configured
-	if s.swaggerDir != "" {
+	if s.swaggerEnabled {
 		s.registerSwaggerHandler(mux)
 	}
 

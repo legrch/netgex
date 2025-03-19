@@ -1,6 +1,6 @@
 # NetGeX - Go Network and gRPC Extensions
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/legrch/netgex.svg)](https://pkg.go.dev/github.com/legrch/netgex)
+[![Go Reference](https://pkg.go.dev/badge/github.com/legrch/server.svg)](https://pkg.go.dev/github.com/legrch/netgex)
 [![Go Report Card](https://goreportcard.com/badge/github.com/legrch/netgex)](https://goreportcard.com/report/github.com/legrch/netgex)
 [![License](https://img.shields.io/github/license/legrch/netgex)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/legrch/netgex)](https://github.com/legrch/netgex/releases)
@@ -16,14 +16,21 @@ This package offers a unified approach to create and manage various server compo
 - Profiling servers with pprof
 - Graceful shutdown management
 - Environment-based configuration
+- JSON marshaling customization
+- CORS configuration
 
 ## Package Structure
 
-- `grpc/` - gRPC server implementation
-- `gateway/` - HTTP/REST gateway server implementation
+- `server/` - Main server implementation
 - `service/` - Service registration interfaces
-- `metrics/` - Metrics server for Prometheus
-- `pprof/` - Profiling server
+- `config/` - Configuration utilities
+- `splash/` - Terminal startup display
+- `internal/` - Internal implementation details:
+  - `grpc/` - gRPC server implementation
+  - `gateway/` - HTTP/REST gateway server implementation
+  - `metrics/` - Metrics server for Prometheus
+  - `pprof/` - Profiling server
+  - `pyroscope/` - Continuous profiling
 - `examples/` - Example implementations
 
 ## Usage
@@ -45,16 +52,17 @@ The server package uses environment variables for configuration:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `LOG_LEVEL` | Logging level | `info` |
 | `GRPC_ADDRESS` | gRPC server address | `:9090` |
 | `HTTP_ADDRESS` | HTTP/REST gateway address | `:8080` |
 | `METRICS_ADDRESS` | Metrics server address | `:9091` |
 | `PPROF_ADDRESS` | pprof server address | `:6060` |
 | `REFLECTION_ENABLED` | Enable gRPC reflection | `true` |
+| `HEALTH_CHECK_ENABLED` | Enable health checks | `true` |
 | `CLOSE_TIMEOUT` | Timeout for graceful shutdown | `10s` |
+| `SWAGGER_ENABLED` | Enable Swagger UI | `true` |
 | `SWAGGER_DIR` | Directory containing swagger files | `./api` |
 | `SWAGGER_BASE_PATH` | Base path for swagger UI | `/` |
-| `PROJECT_NAME` | Application name for splash screen | `Service` |
-| `VERSION` | Application version for splash screen | `dev` |
 
 ### Components
 
@@ -72,86 +80,27 @@ type Registrar interface {
 }
 ```
 
-#### gRPC Server
-
-The `grpc.Server` provides a configurable gRPC server with support for:
-
-- Multiple service registrations
-- Custom interceptors
-- Health checks
-- gRPC reflection
-- Graceful shutdown
-
-```go
-server := grpc.NewServer(
-	logger,
-	5*time.Second,
-	":50051",
-	grpc.WithRegistrars(myService),
-	grpc.WithUnaryInterceptors(
-		grpc_recovery.UnaryServerInterceptor(),
-		grpc_prometheus.UnaryServerInterceptor,
-	),
-	grpc.WithReflection(true),
-	grpc.WithHealthCheck(true),
-)
-
-if err := server.Run(ctx); err != nil {
-	log.Fatal(err)
-}
-```
-
-#### Gateway Server
-
-The `gateway.Server` provides a configurable HTTP/REST gateway server with support for:
-
-- Multiple service registrations
-- Custom header matchers
-- CORS configuration
-- Swagger UI
-- Health checks
-- Graceful shutdown
-
-```go
-gateway := gateway.NewServer(
-	logger,
-	5*time.Second,
-	":50051",  // gRPC server address
-	":8080",   // HTTP server address
-	gateway.WithRegistrars(myService),
-	gateway.WithCORS(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	}),
-	gateway.WithSwagger("./api/swagger", "/api/v1"),
-)
-
-if err := gateway.Run(ctx); err != nil {
-	log.Fatal(err)
-}
-```
-
 #### Main Server
 
-The `netgex.Server` provides a unified way to initialize and run your application with all components:
+The `server.Server` provides a unified way to initialize and run your application with all components:
 
 ```go
 // Create server options
-opts := []netgex.Option{
-	netgex.WithLogger(logger),
-	netgex.WithRegistrars(myService),
-	netgex.WithCloseTimeout(5 * time.Second),
-	netgex.WithGRPCAddress(":50051"),
-	netgex.WithHTTPAddress(":8080"),
-	netgex.WithReflection(true),
-	netgex.WithHealthCheck(true),
-	netgex.WithCORS(&corsOptions),
-	netgex.WithSwaggerDir("./api/swagger"),
-	netgex.WithSwaggerBasePath("/api/v1"),
+opts := []server.Option{
+	server.WithLogger(logger),
+	server.WithServices(myService),
+	server.WithCloseTimeout(5 * time.Second),
+	server.WithGRPCAddress(":50051"),
+	server.WithHTTPAddress(":8080"),
+	server.WithReflection(true),
+	server.WithHealthCheck(true),
+	server.WithGatewayCORS(corsOptions),
+	server.WithSwaggerDir("./api/swagger"),
+	server.WithSwaggerBasePath("/api/v1"),
 }
 
 // Create server
-srv := netgex.NewServer(opts...)
+srv := server.NewServer(opts...)
 
 // Run the server
 if err := srv.Run(ctx); err != nil {
@@ -175,7 +124,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/legrch/netgex"
+	"github.com/legrch/netgex/server"
 	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
@@ -203,21 +152,21 @@ func main() {
 	}
 
 	// Create server options
-	opts := []netgex.Option{
-		netgex.WithLogger(logger),
-		netgex.WithRegistrars(myService),
-		netgex.WithCloseTimeout(5 * time.Second),
-		netgex.WithGRPCAddress(":50051"),
-		netgex.WithHTTPAddress(":8080"),
-		netgex.WithReflection(true),
-		netgex.WithHealthCheck(true),
-		netgex.WithCORS(&corsOptions),
-		netgex.WithSwaggerDir("./api/swagger"),
-		netgex.WithSwaggerBasePath("/api/v1"),
+	opts := []server.Option{
+		server.WithLogger(logger),
+		server.WithServices(myService),
+		server.WithCloseTimeout(5 * time.Second),
+		server.WithGRPCAddress(":50051"),
+		server.WithHTTPAddress(":8080"),
+		server.WithReflection(true),
+		server.WithHealthCheck(true),
+		server.WithGatewayCORS(corsOptions),
+		server.WithSwaggerDir("./api/swagger"),
+		server.WithSwaggerBasePath("/api/v1"),
 	}
 
 	// Create server
-	srv := netgex.NewServer(opts...)
+	srv := server.NewServer(opts...)
 
 	// Run the server
 	if err := srv.Run(ctx); err != nil {
@@ -255,6 +204,7 @@ The server package provides the following configuration options:
 
 ### Basic Options
 - `WithLogger(logger *slog.Logger)` - Sets the logger for the server
+- `WithConfig(config *config.Config)` - Sets the configuration for the server
 - `WithCloseTimeout(timeout time.Duration)` - Sets the timeout for graceful shutdown
 - `WithGRPCAddress(address string)` - Sets the gRPC server address
 - `WithHTTPAddress(address string)` - Sets the HTTP server address
@@ -264,23 +214,41 @@ The server package provides the following configuration options:
 - `WithSwaggerBasePath(path string)` - Sets the base path for swagger UI
 - `WithReflection(enabled bool)` - Enables or disables gRPC reflection
 - `WithHealthCheck(enabled bool)` - Enables or disables health checks
-- `WithRegistrars(registrars ...service.Registrar)` - Sets the service registrars
+- `WithServices(registrars ...service.Registrar)` - Sets the service registrars
 - `WithProcesses(processes ...Process)` - Adds additional processes to the server
-- `WithUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor)` - Sets the unary interceptors for the gRPC server
-- `WithStreamInterceptors(interceptors ...grpc.StreamServerInterceptor)` - Sets the stream interceptors for the gRPC server
-- `WithCORS(options *cors.Options)` - Enables CORS with the specified options
-- `WithAppName(name string)` - Sets the application name for the splash screen
-- `WithAppVersion(version string)` - Sets the application version for the splash screen
+
+### Server Options
+- `WithGRPCServerOptions(options ...grpc.ServerOption)` - Sets additional options for the gRPC server
+- `WithGRPCUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor)` - Sets the unary interceptors for the gRPC server
+- `WithGRPCStreamInterceptors(interceptors ...grpc.StreamServerInterceptor)` - Sets the stream interceptors for the gRPC server
+- `WithGatewayMuxOptions(options runtime.ServeMuxOption)` - Sets the ServeMux options for the gateway server
+- `WithGatewayCORS(options cors.Options)` - Enables CORS with the specified options for the gateway
 
 ### JSON Options
-- `WithJSONConfig(config *gateway.JSONConfig)` - Sets the JSON configuration for the gateway
-- `WithJSONConfigFromEnv()` - Configures the JSON options from environment variables
-- `WithJSONUseProtoNames(useProtoNames bool)` - Enables or disables using proto field names
-- `WithJSONEmitUnpopulated(emitUnpopulated bool)` - Enables or disables emitting unpopulated fields
-- `WithJSONUseEnumNumbers(useEnumNumbers bool)` - Enables or disables using enum numbers
-- `WithJSONAllowPartial(allowPartial bool)` - Enables or disables allowing partial messages
-- `WithJSONMultiline(multiline bool)` - Enables or disables multiline output
-- `WithJSONIndent(indent string)` - Sets the indentation string for multiline output
+The gateway server supports customizable JSON marshaling through `runtime.ServeMuxOption`:
+
+```go
+server.WithGatewayMuxOptions(
+	runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames:   true,
+			EmitUnpopulated: true,
+			UseEnumNumbers:  false,
+			AllowPartial:    true,
+			Multiline:       true,
+			Indent:          "  ",
+		},
+	}),
+)
+```
+
+Options include:
+- `UseProtoNames` - Use proto field names instead of JSON names
+- `EmitUnpopulated` - Include unpopulated fields in output
+- `UseEnumNumbers` - Use enum numbers instead of string names
+- `AllowPartial` - Allow partial messages
+- `Multiline` - Format output with multiple lines
+- `Indent` - Set indentation for multiline output
 
 ## Custom Processes
 
@@ -297,7 +265,7 @@ type Process interface {
 Then add your process to the server:
 
 ```go
-netgex.WithProcesses(yourCustomProcess)
+server.WithProcesses(yourCustomProcess)
 ```
 
 ## Examples
@@ -305,8 +273,9 @@ netgex.WithProcesses(yourCustomProcess)
 See the `examples/` directory for complete examples of how to use the server package:
 
 - `simple/` - Basic gRPC and gateway server setup
-- `advanced/` - Advanced configuration with interceptors, Swagger, and more
+- `advanced/` - Advanced configuration with service registration, Swagger, and more
 - `json/` - Examples of JSON configuration for the gateway
+- `config/` - Environment-based configuration examples
 
 ## Related Documentation
 
