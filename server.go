@@ -49,7 +49,9 @@ type Server struct {
 
 // NewServer creates a new Server with the given options
 func NewServer(opts ...Option) *Server {
-	s := &Server{}
+	s := &Server{
+		cfg: config.NewConfig(),
+	}
 
 	// Apply options
 	for _, opt := range opts {
@@ -61,6 +63,11 @@ func NewServer(opts ...Option) *Server {
 
 // Run starts the Server and all its processes
 func (s *Server) Run(ctx context.Context) error {
+	
+	if s.logger == nil {
+		s.logger = slog.Default()
+	}
+	
 	s.logger.Info("starting application")
 
 	// Create gRPC server

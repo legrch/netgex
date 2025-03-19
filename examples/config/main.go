@@ -15,22 +15,33 @@ import (
 func main() {
 	// Set up logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: slog.LevelDebug,
 	}))
 
 	// Method 1: Load configuration from environment variables
-	cfg, err := config.LoadFromEnv("NETGEX")
-	if err != nil {
-		logger.Error("failed to load config from env", "error", err)
-		os.Exit(1)
+
+	cfg := &config.Config{
+		LogLevel:           "debug",
+		CloseTimeout:       10 * time.Second,
+		AppName:            "Service",
+		AppVersion:         "dev",
+		GRPCAddress:        ":9090",
+		HTTPAddress:        ":8080",
+		MetricsAddress:     ":9091",
+		PprofAddress:       ":6060",
+		ReflectionEnabled:  true,
+		HealthCheckEnabled: true,
+		SwaggerDir:         "./api/swagger",
+		SwaggerBasePath:    "/api",
 	}
 
 	// Set logger (not loaded from env because it's a complex object)
-	cfg.Logger = logger
+	// cfg.Logger = logger
 
 	// Create server with config
 	server := netgex.NewServer(
 		netgex.WithConfig(cfg),
+		// netgex.WithLogger(logger),
 	)
 
 	// Method 2: Configure directly (alternative approach)

@@ -29,7 +29,6 @@ func main() {
 	// export JSON_INDENT="    "
 	app := netgex.NewServer(
 		netgex.WithLogger(logger),
-		netgex.WithJSONConfigFromEnv(),
 	)
 
 	// Example 2: Using direct configuration
