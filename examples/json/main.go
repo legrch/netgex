@@ -7,8 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/legrch/netgex"
-	"github.com/legrch/netgex/internal/gateway"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/legrch/netgex/server"
 )
 
 func main() {
@@ -27,34 +29,34 @@ func main() {
 	// export JSON_ALLOW_PARTIAL=true
 	// export JSON_MULTILINE=true
 	// export JSON_INDENT="    "
-	app := netgex.NewServer(
-		netgex.WithLogger(logger),
-	)
+	// app := server.NewServer(
+	// 	server.WithLogger(logger),
+	// )
 
 	// Example 2: Using direct configuration
-	jsonConfig := &gateway.JSONConfig{
-		UseProtoNames:   true,
-		EmitUnpopulated: true,
-		UseEnumNumbers:  false,
-		AllowPartial:    true,
-		Multiline:       true,
-		Indent:          "    ",
-	}
+	// jsonConfig := runtime.ServeMuxOption{
+	// 	UseProtoNames:   true,
+	// 	EmitUnpopulated: true,
+	// 	UseEnumNumbers:  false,
+	// 	AllowPartial:    true,
+	// 	Multiline:       true,
+	// 	Indent:          "    ",
+	// }
 
-	app = netgex.NewServer(
-		netgex.WithLogger(logger),
-		netgex.WithJSONConfig(jsonConfig),
-	)
-
-	// Example 3: Using individual option functions
-	app = netgex.NewServer(
-		netgex.WithLogger(logger),
-		netgex.WithJSONUseProtoNames(true),
-		netgex.WithJSONEmitUnpopulated(true),
-		netgex.WithJSONUseEnumNumbers(false),
-		netgex.WithJSONAllowPartial(true),
-		netgex.WithJSONMultiline(true),
-		netgex.WithJSONIndent("    "),
+	app := server.NewServer(
+		server.WithLogger(logger),
+		server.WithGatewayMuxOptions(
+			runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+				MarshalOptions: protojson.MarshalOptions{
+					UseProtoNames:   true,
+					EmitUnpopulated: true,
+					UseEnumNumbers:  false,
+					AllowPartial:    true,
+					Multiline:       true,
+					Indent:          "    ",
+				},
+			}),
+		),
 	)
 
 	// Run the application

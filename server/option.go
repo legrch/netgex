@@ -1,12 +1,12 @@
-package netgex
+package server
 
 import (
+	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/service"
 	"log/slog"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/legrch/netgex/pkg/config"
-	"github.com/legrch/netgex/pkg/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 )
@@ -132,6 +132,7 @@ func WithHealthCheck(enabled bool) Option {
 // WithSwaggerDir sets the directory containing swagger files
 func WithSwaggerDir(dir string) Option {
 	return func(s *Server) {
+		s.cfg.SwaggerEnabled = true
 		s.cfg.SwaggerDir = dir
 	}
 }
@@ -139,6 +140,7 @@ func WithSwaggerDir(dir string) Option {
 // WithSwaggerBasePath sets the base path for swagger UI
 func WithSwaggerBasePath(path string) Option {
 	return func(s *Server) {
+		s.cfg.SwaggerEnabled = true
 		s.cfg.SwaggerBasePath = path
 	}
 }

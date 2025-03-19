@@ -18,6 +18,7 @@ type Splash struct {
 	httpAddress     string
 	metricsAddress  string
 	pprofAddress    string
+	swaggerEnabled  bool
 	swaggerBasePath string
 	features        []string
 }
@@ -32,9 +33,9 @@ func NewSplash(opts ...SplashOption) *Splash {
 
 	// Default values
 	s := &Splash{
-		hostname:    hostname,
-		goVersion:   runtime.Version(),
-		features:    []string{},
+		hostname:  hostname,
+		goVersion: runtime.Version(),
+		features:  []string{},
 	}
 
 	// Apply options
@@ -45,44 +46,44 @@ func NewSplash(opts ...SplashOption) *Splash {
 	return s
 }
 
-
 // WithGRPCAddress sets the gRPC address for the splash screen
-func WithSplashGRPCAddress(address string) SplashOption {
+func WithGRPCAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.grpcAddress = address
 	}
 }
 
 // WithHTTPAddress sets the HTTP address for the splash screen
-func WithSplashHTTPAddress(address string) SplashOption {
+func WithHTTPAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.httpAddress = address
 	}
 }
 
 // WithMetricsAddress sets the metrics address for the splash screen
-func WithSplashMetricsAddress(address string) SplashOption {
+func WithMetricsAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.metricsAddress = address
 	}
 }
 
 // WithPprofAddress sets the pprof address for the splash screen
-func WithSplashPprofAddress(address string) SplashOption {
+func WithPprofAddress(address string) SplashOption {
 	return func(s *Splash) {
 		s.pprofAddress = address
 	}
 }
 
 // WithSwaggerBasePath sets the swagger base path for the splash screen
-func WithSplashSwaggerBasePath(path string) SplashOption {
+func WithSwaggerBasePath(path string) SplashOption {
 	return func(s *Splash) {
+		s.swaggerEnabled = true
 		s.swaggerBasePath = path
 	}
 }
 
 // WithFeature adds a feature to the splash screen
-func WithSplashFeature(feature string) SplashOption {
+func WithFeature(feature string) SplashOption {
 	return func(s *Splash) {
 		s.features = append(s.features, feature)
 	}
@@ -121,7 +122,7 @@ func (s *Splash) String() string {
 		}
 
 		// Add Swagger information if enabled
-		if s.httpAddress != "" {
+		if s.swaggerEnabled {
 			// Extract port from HTTP address
 			port := strings.TrimPrefix(s.httpAddress, ":")
 

@@ -175,8 +175,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/legrch/netgex"
-	"github.com/legrch/netgex/pkg/service"
+	"github.com/legrch/netgex/server"
+	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/runtime"
@@ -203,17 +203,17 @@ func main() {
 	}
 
 	// Create server options
-	opts := []netgex.Option{
-		netgex.WithLogger(logger),
-		netgex.WithServices(myService),
-		netgex.WithCloseTimeout(5 * time.Second),
-		netgex.WithGRPCAddress(":50051"),
-		netgex.WithHTTPAddress(":8080"),
-		netgex.WithReflection(true),
-		netgex.WithHealthCheck(true),
-		netgex.WithCORS(&corsOptions),
-		netgex.WithSwaggerDir("./api/swagger"),
-		netgex.WithSwaggerBasePath("/api/v1"),
+	opts := []server.Option{
+		server.WithLogger(logger),
+		server.WithServices(myService),
+		server.WithCloseTimeout(5 * time.Second),
+		server.WithGRPCAddress(":50051"),
+		server.WithHTTPAddress(":8080"),
+		server.WithReflection(true),
+		server.WithHealthCheck(true),
+		server.WithCORS(&corsOptions),
+		server.WithSwaggerDir("./api/swagger"),
+		server.WithSwaggerBasePath("/api/v1"),
 	}
 
 	// Create server

@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/server"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/legrch/netgex"
-	"github.com/legrch/netgex/pkg/config"
 )
 
 func main() {
@@ -39,8 +38,8 @@ func main() {
 	// cfg.Logger = logger
 
 	// Create server with config
-	server := netgex.NewServer(
-		netgex.WithConfig(cfg),
+	server := server.NewServer(
+		server.WithConfig(cfg),
 		// netgex.WithLogger(logger),
 	)
 

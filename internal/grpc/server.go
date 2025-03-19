@@ -3,11 +3,10 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/legrch/netgex/service"
 	"log/slog"
 	"net"
 	"time"
-
-	"github.com/legrch/netgex/pkg/service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

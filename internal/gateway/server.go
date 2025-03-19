@@ -3,14 +3,13 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"github.com/legrch/netgex/service"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/legrch/netgex/pkg/service"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"

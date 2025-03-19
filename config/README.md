@@ -21,7 +21,7 @@ import (
     "log/slog"
     "os"
     "github.com/legrch/netgex"
-    "github.com/legrch/netgex/pkg/config"
+    "github.com/legrch/netgex/config"
 )
 
 func main() {
@@ -55,7 +55,7 @@ import (
     "os"
     "time"
     "github.com/legrch/netgex"
-    "github.com/legrch/netgex/pkg/config"
+    "github.com/legrch/netgex/config"
 )
 
 func main() {

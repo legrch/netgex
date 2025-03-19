@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/legrch/netgex/server"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/rs/cors"
 
-	"github.com/legrch/netgex"
 	"github.com/legrch/netgex/examples/advanced/service"
 )
 
@@ -35,21 +35,21 @@ func main() {
 	}
 
 	// Create entrypoint options
-	opts := []netgex.Option{
-		netgex.WithLogger(logger),
-		netgex.WithServices(greeterService),
-		netgex.WithCloseTimeout(5 * time.Second),
-		netgex.WithGRPCAddress(":50051"),
-		netgex.WithHTTPAddress(":8080"),
-		netgex.WithReflection(true),
-		netgex.WithHealthCheck(true),
-		netgex.WithGatewayCORS(corsOptions),
-		netgex.WithSwaggerDir("./api/swagger"),
-		netgex.WithSwaggerBasePath("/api"),
+	opts := []server.Option{
+		server.WithLogger(logger),
+		server.WithServices(greeterService),
+		server.WithCloseTimeout(5 * time.Second),
+		server.WithGRPCAddress(":50051"),
+		server.WithHTTPAddress(":8080"),
+		server.WithReflection(true),
+		server.WithHealthCheck(true),
+		server.WithGatewayCORS(corsOptions),
+		server.WithSwaggerDir("./api/swagger"),
+		server.WithSwaggerBasePath("/api"),
 	}
 
 	// Create entrypoint
-	ep := netgex.NewServer(opts...)
+	ep := server.NewServer(opts...)
 
 	// Run the entrypoint
 	logger.Info("starting application")

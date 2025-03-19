@@ -1,4 +1,4 @@
-package server
+package netgex
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/internal/gateway"
+	"github.com/legrch/netgex/internal/metrics"
+	"github.com/legrch/netgex/internal/pprof"
 	"github.com/legrch/netgex/service"
 	"github.com/legrch/netgex/splash"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/legrch/netgex/internal/gateway"
-	"github.com/legrch/netgex/internal/metrics"
-	"github.com/legrch/netgex/internal/pprof"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 
@@ -196,7 +196,7 @@ func (s *Server) displaySplash() {
 	}
 
 	// Add swagger if enabled
-	if s.cfg.SwaggerEnabled {
+	if s.cfg.SwaggerDir != "" {
 		splashOpts = append(splashOpts, splash.WithSwaggerBasePath(s.cfg.SwaggerBasePath))
 	}
 
