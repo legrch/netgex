@@ -23,6 +23,7 @@ type Config struct {
 	HealthCheckEnabled bool `envconfig:"HEALTH_CHECK_ENABLED" default:"true"`
 
 	// Swagger configuration
+	SwaggerEnabled   bool   `envconfig:"SWAGGER_ENABLED" default:"true"`
 	SwaggerDir      string `envconfig:"SWAGGER_DIR" default:"./api"`
 	SwaggerBasePath string `envconfig:"SWAGGER_BASE_PATH" default:"/"`
 }
@@ -38,6 +39,7 @@ func NewConfig() *Config {
 		PprofAddress:       ":6060",
 		ReflectionEnabled:  true,
 		HealthCheckEnabled: true,
+		SwaggerEnabled:     true,
 		SwaggerDir:         "./api",
 		SwaggerBasePath:    "/",
 	}

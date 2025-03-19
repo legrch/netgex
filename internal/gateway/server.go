@@ -40,6 +40,7 @@ type Server struct {
 	corsEnabled           bool
 	corsOptions           cors.Options
 	pprofEnabled          bool
+	swaggerEnabled        bool
 	swaggerDir            string
 	swaggerBasePath       string
 	jsonConfig            *JSONConfig
@@ -119,6 +120,7 @@ func WithPprof(enabled bool) Option {
 // WithSwagger enables Swagger UI
 func WithSwagger(dir, basePath string) Option {
 	return func(s *Server) {
+		s.swaggerEnabled = true
 		s.swaggerDir = dir
 		s.swaggerBasePath = basePath
 	}
@@ -179,7 +181,7 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	// Add Swagger UI if configured
-	if s.swaggerDir != "" {
+	if s.swaggerEnabled {
 		s.registerSwaggerHandler(mux)
 	}
 

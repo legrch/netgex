@@ -99,7 +99,7 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	// Add swagger if configured
-	if s.cfg.SwaggerDir != "" {
+	if s.cfg.SwaggerEnabled {
 		gatewayOpts = append(gatewayOpts, gateway.WithSwagger(s.cfg.SwaggerDir, s.cfg.SwaggerBasePath))
 	}
 
