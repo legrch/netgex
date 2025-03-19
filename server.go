@@ -3,17 +3,18 @@ package netgex
 import (
 	"context"
 	"fmt"
-	gateway2 "github.com/legrch/netgex/gateway"
-	grpcserver "github.com/legrch/netgex/grpc"
-	"github.com/legrch/netgex/metrics"
-	"github.com/legrch/netgex/pprof"
-	"github.com/legrch/netgex/service"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/legrch/netgex/gateway"
+	"github.com/legrch/netgex/metrics"
+	"github.com/legrch/netgex/pprof"
+	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
+
+	grpcserver "github.com/legrch/netgex/grpc"
 )
 
 // Constants
@@ -47,7 +48,7 @@ type Server struct {
 	streamInterceptors []grpc.StreamServerInterceptor
 	corsOptions        cors.Options
 	corsEnabled        bool
-	jsonConfig         *gateway2.JSONConfig
+	jsonConfig         *gateway.JSONConfig
 	appName            string
 	appVersion         string
 }
@@ -66,7 +67,7 @@ func NewServer(opts ...Option) *Server {
 		swaggerBasePath: getEnv("SWAGGER_BASE_PATH", "/"),
 		reflection:      getEnvBool("REFLECTION_ENABLED"),
 		healthCheck:     true,
-		jsonConfig:      gateway2.DefaultJSONConfig(),
+		jsonConfig:      gateway.DefaultJSONConfig(),
 		appName:         getEnv("PROJECT_NAME", "Service"),
 		appVersion:      getEnv("VERSION", "dev"),
 	}
@@ -96,20 +97,20 @@ func (s *Server) Run(ctx context.Context) error {
 	)
 
 	// Create gateway server
-	gatewayOpts := []gateway2.Option{
-		gateway2.WithRegistrars(s.registrars...),
-		gateway2.WithJSONConfig(s.jsonConfig),
+	gatewayOpts := []gateway.Option{
+		gateway.WithRegistrars(s.registrars...),
+		gateway.WithJSONConfig(s.jsonConfig),
 	}
 
 	if s.corsEnabled {
-		gatewayOpts = append(gatewayOpts, gateway2.WithCORS(&s.corsOptions))
+		gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.corsOptions))
 	}
 
 	if s.swaggerDir != "" {
-		gatewayOpts = append(gatewayOpts, gateway2.WithSwagger(s.swaggerDir, s.swaggerBasePath))
+		gatewayOpts = append(gatewayOpts, gateway.WithSwagger(s.swaggerDir, s.swaggerBasePath))
 	}
 
-	gatewayServer := gateway2.NewServer(
+	gatewayServer := gateway.NewServer(
 		s.logger,
 		s.closeTimeout,
 		s.grpcAddress,
