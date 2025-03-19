@@ -221,7 +221,7 @@ The server package provides the following configuration options:
 - `WithGRPCServerOptions(options ...grpc.ServerOption)` - Sets additional options for the gRPC server
 - `WithGRPCUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor)` - Sets the unary interceptors for the gRPC server
 - `WithGRPCStreamInterceptors(interceptors ...grpc.StreamServerInterceptor)` - Sets the stream interceptors for the gRPC server
-- `WithGatewayMuxOptions(options runtime.ServeMuxOption)` - Sets the ServeMux options for the gateway server
+- `WithGatewayMuxOptions(options ...runtime.ServeMuxOption)` - Sets the ServeMux options for the gateway server
 - `WithGatewayCORS(options cors.Options)` - Enables CORS with the specified options for the gateway
 
 ### JSON Options
@@ -276,6 +276,31 @@ See the `examples/` directory for complete examples of how to use the server pac
 - `advanced/` - Advanced configuration with service registration, Swagger, and more
 - `json/` - Examples of JSON configuration for the gateway
 - `config/` - Environment-based configuration examples
+
+## Development
+
+### Task Runner
+
+This project uses [Task](https://taskfile.dev) as a task runner instead of Make. To get started:
+
+1. Install Task: `go install github.com/go-task/task/v3/cmd/task@latest`
+2. Run `task` to see available commands
+
+Common tasks:
+- `task lint` - Run linters
+- `task test` - Run tests
+- `task test:coverage` - Run tests with coverage report
+- `task mock` - Generate mocks
+
+### Release Process
+
+The project follows a structured release process:
+
+1. Prepare a release: `task prepare-release -- 1.2.3`
+2. Update the CHANGELOG.md
+3. Create the release: `task release`
+
+For detailed information about creating releases, see [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Related Documentation
 

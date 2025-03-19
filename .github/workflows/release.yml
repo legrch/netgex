@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Extract tag version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Verify version matches
+        run: |
+          FILE_VERSION=$(cat VERSION)
+          if [ "$FILE_VERSION" != "$VERSION" ]; then
+            echo "Error: Version in VERSION file ($FILE_VERSION) doesn't match tag version ($VERSION)"
+            exit 1
+          fi
+
+      - name: Create release config
+        run: |
+          cp .release.yml.template .release.yml
+          yq -i '.version = env(VERSION)' .release.yml
+
+      - name: Build and checksum
+        run: task checksum
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the changelog entry
+          CHANGELOG_ENTRY=$(awk -v ver="$VERSION" 'BEGIN {found=0} /^## \['ver'\]/ {found=1} /^## \[/ && found==1 && $0 !~ ver {exit} found==1 {print}' CHANGELOG.md)
+          
+          # Create release
+          title="NetGeX v$VERSION"
+          notes="## NetGeX v$VERSION
+
+          $CHANGELOG_ENTRY"
+          
+          # Upload release assets
+          gh release create v$VERSION ./dist/* \
+            --title "$title" \
+            --notes "$notes" 

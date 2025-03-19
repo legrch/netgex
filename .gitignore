@@ -74,3 +74,7 @@ Makefile.local
 Taskfile.local.yml
 .taskfiles/*.local.yml
 .tasks.cache/
+
+# Release related
+.release.yml
+checksums.txt

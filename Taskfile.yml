@@ -73,3 +73,75 @@ tasks:
       - go test -race -coverprofile=coverage.out -covermode=atomic ./...
       - go tool cover -html=coverage.out -o coverage.html
       - echo "Coverage report generated at coverage.html"
+
+  # Release tasks
+  prepare-release:
+    desc: Prepare a new release
+    cmds:
+      - scripts/prepare-release.sh "{{.CLI_ARGS}}"
+    preconditions:
+      - sh: test -f scripts/prepare-release.sh
+        msg: "scripts/prepare-release.sh file not found. Please create it first."
+
+  build-release:
+    desc: Build release artifacts
+    cmds:
+      - mkdir -p dist
+      - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/netgex_linux_amd64 ./examples/simple/main.go
+      - GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/netgex_darwin_amd64 ./examples/simple/main.go
+      - GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/netgex_darwin_arm64 ./examples/simple/main.go
+      - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/netgex_windows_amd64.exe ./examples/simple/main.go
+      - echo "Release artifacts built successfully in dist/ directory"
+    preconditions:
+      - sh: test -f ./examples/simple/main.go
+        msg: "Example main.go file not found. Please create it first."
+
+  checksum:
+    desc: Generate checksums for release artifacts
+    deps: [build-release]
+    cmds:
+      - cd dist && shasum -a 256 * > checksums.txt
+      - echo "Checksums generated in dist/checksums.txt"
+
+  release:
+    desc: Create and publish a new GitHub release
+    deps: [checksum]
+    vars:
+      VERSION:
+        sh: cat VERSION
+      RELEASE_CONFIG: .release.yml
+    cmds:
+      - |
+        if [ ! -f {{.RELEASE_CONFIG}} ]; then
+          echo "Release config not found. Run 'task prepare-release' first."
+          exit 1
+        fi
+        
+        VERSION="{{.VERSION}}" && \
+        TITLE=$(yq eval '.title' {{.RELEASE_CONFIG}} | envsubst) && \
+        
+        # Extract notes from .release.yml
+        NOTES=$(yq eval '.notes' {{.RELEASE_CONFIG}} | envsubst) && \
+        
+        # Get changelog entries
+        CHANGELOG_ENTRY=$(awk -v ver="${VERSION}" 'BEGIN {found=0} /^## \['ver'\]/ {found=1} /^## \[/ && found==1 && $0 !~ ver {exit} found==1 {print}' CHANGELOG.md) && \
+        
+        # Combine notes with changelog
+        FULL_NOTES="${NOTES}
+        
+        ---
+        
+        ${CHANGELOG_ENTRY}" && \
+        
+        # Create release with all artifacts in dist/
+        echo "Creating GitHub release v${VERSION}..." && \
+        gh release create v${VERSION} dist/* \
+          --title "${TITLE}" \
+          --notes "${FULL_NOTES}"
+    preconditions:
+      - sh: command -v gh >/dev/null
+        msg: "GitHub CLI (gh) not found. Please install it first: https://cli.github.com/"
+      - sh: command -v yq >/dev/null
+        msg: "yq not found. Please install it first: https://github.com/mikefarah/yq"
+      - sh: command -v envsubst >/dev/null
+        msg: "envsubst not found. Please install it first (part of gettext package)"

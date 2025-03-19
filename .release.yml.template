@@ -1,0 +1,17 @@
+# Release configuration
+# Copy this file to .release.yml and fill in the values before running 'task release'
+
+# Version should match the content of the VERSION file
+version: "0.1.0" 
+
+# Release title (${VERSION} will be replaced with the version)
+title: "NetGeX v${VERSION}"
+
+# Release notes
+notes: |
+  ## What's Changed
+
+  <!-- Add a summary of changes -->
+
+  ## Full Changelog
+  <!-- The task will automatically include this --> 
