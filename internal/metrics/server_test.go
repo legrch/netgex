@@ -84,12 +84,14 @@ func TestRegisterAndUnregisterAppMetrics(t *testing.T) {
 	// Act - Register
 	RegisterAppMetrics()
 
-	// Assert - Register
-	assert.True(t, prometheus.DefaultRegisterer.(*prometheus.Registry).Exists(AppVersion))
+	// Assert - Check if metric exists after registration
+	_, err := testutil.GatherAndCount(prometheus.DefaultGatherer, "app_version")
+	assert.NoError(t, err, "Metric should be registered")
 
 	// Act - Unregister
 	UnregisterAppMetrics()
 
-	// Assert - Unregister
-	assert.False(t, prometheus.DefaultRegisterer.(*prometheus.Registry).Exists(AppVersion))
+	// Assert - Check metric no longer exists
+	count, _ := testutil.GatherAndCount(prometheus.DefaultGatherer, "app_version")
+	assert.Equal(t, 0, count, "Metric should not be registered")
 }

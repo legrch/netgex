@@ -1,0 +1,76 @@
+# Binaries and build artifacts
+/bin/
+/build/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+main
+
+# Go specific
+/vendor/
+go.work
+go.work.sum
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+/.env
+/.env.local
+/local/.env
+/tmp/
+/logs/
+*.log
+
+# Test coverage
+coverage.txt
+coverage.html
+/coverage/
+
+# Debug files
+__debug_bin
+debug.test
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Local development
+.local/
+Makefile.local
+*.local.yml
+*.local.yaml
+.private/
+
+# Certificates and secrets
+*.pem
+*.key
+*.crt
+*.csr
+*.cert
+
+
+# Task runner
+.task/
+Taskfile.local.yml
+.taskfiles/*.local.yml
+.tasks.cache/
