@@ -5,6 +5,6 @@ outpkg: "{{.PackageName}}"
 filename: "{{ .InterfaceName | snakecase }}_mock.go"
 all: True
 packages:
-  github.com/legrch/netgex:
+  github.com/legrch/netgex/internal/:
     config:
       recursive: True

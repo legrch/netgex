@@ -38,17 +38,10 @@ tasks:
       - task: imports
       - golangci-lint run ./...
       
-   
-  mock:mockery:
+      
+  mock:
     desc: Generate mocks using mockery
     cmds:
-      - rm -rf internal/mocks
-      - mockery --dir=pkg --output=internal/mocks --all --case=snake
-      
-  mock:mockgen:
-    desc: Generate mocks using mockgen
-    cmds:
-      # - mockgen -destination=internal/mocks/{{.CLI_ARGS}}_mock.go github.com/legrch/netgex/pkg/{{.CLI_ARGS}} {{.CLI_ARGS}}
       - rm -rf internal/mocks
       - mockery 
     requires:
