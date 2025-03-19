@@ -162,17 +162,17 @@ issues:
     - path: "mocks/"
       linters:
         - all
+  
+  # Skip files containing "mock" in their name (moved from run.skip-files)
+  exclude-files:
+    - ".*mock.*\\.go$"
+    - ".*_mock\\.go$"
+  
+  # Skip directories (moved from run.skip-dirs)
+  exclude-dirs:
+    - internal/mocks
+    - ".*mocks.*"
 
 run:
   timeout: 5m
   go: '1.24'
-  
-  # Skip generated code and mocks directory
-  skip-dirs:
-    - internal/mocks
-    - ".*mocks.*"
-  
-  # Skip files containing "mock" in their name
-  skip-files:
-    - ".*mock.*\\.go$"
-    - ".*_mock\\.go$"

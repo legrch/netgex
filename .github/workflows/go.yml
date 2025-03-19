@@ -39,6 +39,6 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: v1.58.1
-        args: --config=.golangci-lint.yml --skip-dirs=internal/mocks --timeout=5m
+        args: --config=.golangci-lint.yml
         install-mode: binary
         skip-cache: true 
