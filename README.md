@@ -176,7 +176,7 @@ import (
 	"time"
 
 	"github.com/legrch/netgex"
-	"github.com/legrch/netgex/service"
+	"github.com/legrch/netgex/pkg/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/runtime"

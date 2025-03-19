@@ -6,11 +6,12 @@ import (
 	"github.com/legrch/netgex/internal/gateway"
 	"github.com/legrch/netgex/internal/metrics"
 	"github.com/legrch/netgex/internal/pprof"
+	"github.com/legrch/netgex/pkg/service"
+	splash2 "github.com/legrch/netgex/pkg/splash"
 	"log/slog"
 	"os"
 	"time"
 
-	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 
@@ -184,33 +185,33 @@ func (s *Server) Run(ctx context.Context) error {
 
 // displaySplash initializes and displays the splash screen
 func (s *Server) displaySplash() {
-	splashOpts := []SplashOption{
-		WithSplashAppName(s.appName),
-		WithSplashAppVersion(s.appVersion),
-		WithSplashGRPCAddress(s.grpcAddress),
-		WithSplashHTTPAddress(s.httpAddress),
-		WithSplashMetricsAddress(s.metricsAddress),
-		WithSplashPprofAddress(s.pprofAddress),
+	splashOpts := []splash2.SplashOption{
+		splash2.WithSplashAppName(s.appName),
+		splash2.WithSplashAppVersion(s.appVersion),
+		splash2.WithSplashGRPCAddress(s.grpcAddress),
+		splash2.WithSplashHTTPAddress(s.httpAddress),
+		splash2.WithSplashMetricsAddress(s.metricsAddress),
+		splash2.WithSplashPprofAddress(s.pprofAddress),
 	}
 
 	// Add features
 	if s.reflection {
-		splashOpts = append(splashOpts, WithSplashFeature("gRPC Reflection"))
+		splashOpts = append(splashOpts, splash2.WithSplashFeature("gRPC Reflection"))
 	}
 	if s.healthCheck {
-		splashOpts = append(splashOpts, WithSplashFeature("Health Checks"))
+		splashOpts = append(splashOpts, splash2.WithSplashFeature("Health Checks"))
 	}
 	if s.corsEnabled {
-		splashOpts = append(splashOpts, WithSplashFeature("CORS"))
+		splashOpts = append(splashOpts, splash2.WithSplashFeature("CORS"))
 	}
 
 	// Add swagger if enabled
 	if s.swaggerDir != "" {
-		splashOpts = append(splashOpts, WithSplashSwaggerBasePath(s.swaggerBasePath))
+		splashOpts = append(splashOpts, splash2.WithSplashSwaggerBasePath(s.swaggerBasePath))
 	}
 
 	// Create and display splash
-	splash := NewSplash(splashOpts...)
+	splash := splash2.NewSplash(splashOpts...)
 	splash.Display()
 }
 

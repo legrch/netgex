@@ -1,4 +1,4 @@
-package netgex
+package splash
 
 import (
 	"fmt"
@@ -203,4 +203,19 @@ func (s *Splash) String() string {
 // Display prints the splash screen to stdout
 func (s *Splash) Display() {
 	fmt.Print(s.String())
+}
+
+// Helper functions for environment variables
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvBool(key string) bool {
+	if value, exists := os.LookupEnv(key); exists {
+		return value == "true" || value == "1" || value == "yes"
+	}
+	return true
 }

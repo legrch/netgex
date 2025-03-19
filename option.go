@@ -1,6 +1,7 @@
 package netgex
 
 import (
+	"github.com/legrch/netgex/pkg/service"
 	"log/slog"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/legrch/netgex/internal/gateway"
-	"github.com/legrch/netgex/service"
 )
 
 // Option is a function that configures a Server

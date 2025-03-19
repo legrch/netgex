@@ -3,7 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/service"
+	"github.com/legrch/netgex/pkg/service"
 	"log/slog"
 	"net/http"
 	"os"
