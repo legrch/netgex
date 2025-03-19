@@ -56,3 +56,20 @@ tasks:
     cmds:
       - goimports -w .
       
+  # Testing tasks
+  test:
+    desc: Run all tests
+    cmds:
+      - go test -race -v ./...
+      
+  test:unit:
+    desc: Run unit tests only
+    cmds:
+      - go test -race -v -short ./...
+      
+  test:coverage:
+    desc: Run tests with coverage and generate report
+    cmds:
+      - go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
