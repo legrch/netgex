@@ -35,9 +35,9 @@ func NewSplash(opts ...SplashOption) *Splash {
 
 	// Default values
 	s := &Splash{
-		appName:     getEnv("PROJECT_NAME", "My Service"),
-		appVersion:  getEnv("VERSION", "dev"),
-		environment: getEnv("ENVIRONMENT", "development"),
+		appName:     "My Service",
+		appVersion:  "dev",
+		environment: "development",
 		hostname:    hostname,
 		goVersion:   runtime.Version(),
 		features:    []string{},
@@ -203,19 +203,4 @@ func (s *Splash) String() string {
 // Display prints the splash screen to stdout
 func (s *Splash) Display() {
 	fmt.Print(s.String())
-}
-
-// Helper functions for environment variables
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
-}
-
-func getEnvBool(key string) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		return value == "true" || value == "1" || value == "yes"
-	}
-	return true
 }
