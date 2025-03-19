@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/legrch/netgex/config"
-	"github.com/legrch/netgex/server"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/server"
 )
 
 func main() {
@@ -40,17 +41,17 @@ func main() {
 	// Create server with config
 	server := server.NewServer(
 		server.WithConfig(cfg),
-		// netgex.WithLogger(logger),
+		// server.WithLogger(logger),
 	)
 
 	// Method 2: Configure directly (alternative approach)
 	/*
-		server := netgex.NewServer(
-			netgex.WithLogger(logger),
-			netgex.WithGRPCAddress(":9090"),
-			netgex.WithHTTPAddress(":8080"),
-			netgex.WithAppName("MyService"),
-			netgex.WithAppVersion("1.0.0"),
+		server := server.NewServer(
+			server.WithLogger(logger),
+			server.WithGRPCAddress(":9090"),
+			server.WithHTTPAddress(":8080"),
+			server.WithAppName("MyService"),
+			server.WithAppVersion("1.0.0"),
 		)
 	*/
 

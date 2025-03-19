@@ -6,7 +6,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-// Config represents the comprehensive configuration for the netgex.Server
+// Config represents the comprehensive configuration for the server.Server
 type Config struct {
 	// Core settings
 	LogLevel     string        `envconfig:"LOG_LEVEL" default:"info"`
@@ -23,7 +23,7 @@ type Config struct {
 	HealthCheckEnabled bool `envconfig:"HEALTH_CHECK_ENABLED" default:"true"`
 
 	// Swagger configuration
-	SwaggerEnabled   bool   `envconfig:"SWAGGER_ENABLED" default:"true"`
+	SwaggerEnabled  bool   `envconfig:"SWAGGER_ENABLED" default:"true"`
 	SwaggerDir      string `envconfig:"SWAGGER_DIR" default:"./api"`
 	SwaggerBasePath string `envconfig:"SWAGGER_BASE_PATH" default:"/"`
 }

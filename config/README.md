@@ -35,8 +35,8 @@ func main() {
     cfg.Logger = slog.Default()
     
     // Create server with config
-    server := netgex.NewServer(
-        netgex.WithConfig(cfg),
+    server := server.NewServer(
+        server.WithConfig(cfg),
     )
     
     // Run the server
@@ -82,8 +82,8 @@ func main() {
     }
     
     // Create server with config
-    server := netgex.NewServer(
-        netgex.WithConfig(cfg),
+    server := server.NewServer(
+        server.WithConfig(cfg),
     )
     
     // Run the server
