@@ -3,18 +3,18 @@ package netgex
 import (
 	"context"
 	"fmt"
+	"github.com/legrch/netgex/internal/gateway"
+	"github.com/legrch/netgex/internal/metrics"
+	"github.com/legrch/netgex/internal/pprof"
 	"log/slog"
 	"os"
 	"time"
 
-	"github.com/legrch/netgex/gateway"
-	"github.com/legrch/netgex/metrics"
-	"github.com/legrch/netgex/pprof"
 	"github.com/legrch/netgex/service"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 
-	grpcserver "github.com/legrch/netgex/grpc"
+	grpcserver "github.com/legrch/netgex/internal/grpc"
 )
 
 // Constants

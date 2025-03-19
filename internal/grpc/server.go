@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/legrch/netgex/service"
 	"log/slog"
 	"net"
 	"time"
@@ -12,6 +11,8 @@ import (
 	"google.golang.org/grpc/health"
 	healthGrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/legrch/netgex/service"
 )
 
 // Option is a function that configures a Server

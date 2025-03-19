@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/legrch/netgex"
-	"github.com/legrch/netgex/gateway"
+	"github.com/legrch/netgex/internal/gateway"
 )
 
 func main() {
