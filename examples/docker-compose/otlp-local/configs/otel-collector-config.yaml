@@ -12,12 +12,8 @@ exporters:
     endpoint: "0.0.0.0:8889"
   logging:
     loglevel: debug
-  tempo:
+  otlp/tempo:
     endpoint: tempo:4317
-    tls:
-      insecure: true
-  otlp/pyroscope:
-    endpoint: pyroscope:4040
     tls:
       insecure: true
 
@@ -26,11 +22,11 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [tempo]
+      exporters: [otlp/tempo, logging]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus]
+      exporters: [prometheus, logging]
     logs:
       receivers: [otlp]
       processors: [batch]
