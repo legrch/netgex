@@ -30,16 +30,16 @@ func (s *Service) PreRun(ctx context.Context) error {
 	s.logger.Info("initializing telemetry services")
 
 	// Initialize each component based on configuration
+	if err := s.setupLogging(ctx); err != nil {
+		return fmt.Errorf("failed to set up logging: %w", err)
+	}
+
 	if err := s.setupTracing(ctx); err != nil {
 		return fmt.Errorf("failed to set up tracing: %w", err)
 	}
 
 	if err := s.setupMetrics(ctx); err != nil {
 		return fmt.Errorf("failed to set up metrics: %w", err)
-	}
-
-	if err := s.setupLogging(ctx); err != nil {
-		return fmt.Errorf("failed to set up logging: %w", err)
 	}
 
 	if err := s.setupProfiling(ctx); err != nil {

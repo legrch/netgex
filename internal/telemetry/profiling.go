@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/pyroscope-io/client"
+	"github.com/grafana/pyroscope-go"
 )
 
 // setupProfiling configures continuous profiling based on the provided configuration
@@ -23,7 +23,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 		// Configure Pyroscope profiler
 		profileTypes := parseProfileTypes(cfg.Types)
 
-		profiler, err := client.Start(client.Config{
+		profiler, err := pyroscope.Start(pyroscope.Config{
 			ApplicationName: s.config.ServiceName,
 			ServerAddress:   cfg.Endpoint,
 			Logger:          newPyroscopeLogger(s.logger),
@@ -68,7 +68,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 }
 
 // newPyroscopeLogger creates a logger adapter for Pyroscope that uses slog
-func newPyroscopeLogger(logger *slog.Logger) client.Logger {
+func newPyroscopeLogger(logger *slog.Logger) pyroscope.Logger {
 	return &pyroscopeLoggerAdapter{logger: logger}
 }
 
@@ -90,16 +90,16 @@ func (l *pyroscopeLoggerAdapter) Debugf(format string, args ...interface{}) {
 }
 
 // parseProfileTypes converts a comma-separated string of profile types to Pyroscope types
-func parseProfileTypes(types string) []client.ProfileType {
-	var profileTypes []client.ProfileType
+func parseProfileTypes(types string) []pyroscope.ProfileType {
+	var profileTypes []pyroscope.ProfileType
 
-	typeMap := map[string]client.ProfileType{
-		"cpu":       client.ProfileCPU,
-		"heap":      client.ProfileAllocObjects,
-		"alloc":     client.ProfileAllocSpace,
-		"goroutine": client.ProfileGoroutines,
-		"mutex":     client.ProfileMutexCount,
-		"block":     client.ProfileBlockCount,
+	typeMap := map[string]pyroscope.ProfileType{
+		"cpu":       pyroscope.ProfileCPU,
+		"heap":      pyroscope.ProfileAllocObjects,
+		"alloc":     pyroscope.ProfileAllocSpace,
+		"goroutine": pyroscope.ProfileGoroutines,
+		"mutex":     pyroscope.ProfileMutexCount,
+		"block":     pyroscope.ProfileBlockCount,
 	}
 
 	for _, t := range strings.Split(types, ",") {
@@ -110,7 +110,7 @@ func parseProfileTypes(types string) []client.ProfileType {
 
 	// Default to CPU if no valid types
 	if len(profileTypes) == 0 {
-		profileTypes = append(profileTypes, client.ProfileCPU)
+		profileTypes = append(profileTypes, pyroscope.ProfileCPU)
 	}
 
 	return profileTypes
