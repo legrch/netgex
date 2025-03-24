@@ -68,7 +68,7 @@ func (s *Service) setupMetrics(ctx context.Context) error {
 
 		// Set global MeterProvider
 		otel.SetMeterProvider(mp)
-		s.meterProvider = mp
+		s.meter = mp
 		s.logger.Info("initialized OTLP metrics exporter", "endpoint", cfg.Endpoint)
 
 	default:

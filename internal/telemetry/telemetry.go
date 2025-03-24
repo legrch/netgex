@@ -10,11 +10,14 @@ import (
 
 // Service represents the telemetry service which handles tracing, metrics, logging, and profiling
 type Service struct {
-	logger         *slog.Logger
-	config         *config.Config
-	tracerProvider interface{ Shutdown(context.Context) error }
-	meterProvider  interface{ Shutdown(context.Context) error }
-	profiler       interface{ Stop() error }
+	logger   *slog.Logger
+	config   *config.Config
+	// tracer is `otlp.TracerProvider`, `jaeger.Tracer`, or none
+	tracer   interface{ Shutdown(context.Context) error }
+	// meter is `otlp.MeterProvider`, or none
+	meter    interface{ Shutdown(context.Context) error }
+	// profiler is `pyroscope.Profiler`, or none
+	profiler interface{ Stop() error }
 }
 
 // NewService creates a new telemetry service
@@ -63,15 +66,15 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	var errs []error
 
 	// Shutdown tracing
-	if s.tracerProvider != nil {
-		if err := s.tracerProvider.Shutdown(ctx); err != nil {
+	if s.tracer != nil {
+		if err := s.tracer.Shutdown(ctx); err != nil {
 			errs = append(errs, fmt.Errorf("trace provider shutdown: %w", err))
 		}
 	}
 
 	// Shutdown metrics
-	if s.meterProvider != nil {
-		if err := s.meterProvider.Shutdown(ctx); err != nil {
+	if s.meter != nil {
+		if err := s.meter.Shutdown(ctx); err != nil {
 			errs = append(errs, fmt.Errorf("meter provider shutdown: %w", err))
 		}
 	}

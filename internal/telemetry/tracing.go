@@ -80,7 +80,7 @@ func (s *Service) setupTracing(ctx context.Context) error {
 
 	// Set global TracerProvider
 	otel.SetTracerProvider(tp)
-	s.tracerProvider = tp
+	s.tracer = tp
 
 	s.logger.Info("tracing initialized successfully",
 		"backend", cfg.Backend,
