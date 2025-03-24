@@ -186,10 +186,6 @@ No. If you use `WithLogger`, that logger will be respected and enhanced with ser
 
 Set `PROFILING_BACKEND=pprof` or use `server.WithProfilingBackend("pprof", "")`. The pprof endpoint will be available at the address configured with `PPROF_ADDRESS` (default `:6060`).
 
-### Do I need JSONConfig if I'm using LoggingConfig?
-
-No. The `JSONConfig` in `internal/gateway` is for configuring JSON serialization in the gateway. The `LoggingConfig` in the telemetry system is for configuring structured logging.
-
 ### How can I see what telemetry is enabled?
 
 The server splash screen shows active telemetry backends:
