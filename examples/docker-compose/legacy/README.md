@@ -35,10 +35,11 @@ The app will:
 
 ## Endpoints
 
-- HTTP API: http://localhost:8080
-- gRPC: localhost:9090
-- Metrics: http://localhost:9091/metrics
-- pprof: http://localhost:6060/debug/pprof/
+The app uses non-standard ports to avoid conflicts:
+- HTTP API: http://localhost:8082
+- gRPC: localhost:50052
+- Metrics: http://localhost:9093/metrics
+- pprof: http://localhost:6062/debug/pprof/
 
 ## Exploring the Data
 
@@ -59,7 +60,7 @@ The app will:
 ### Profiling with pprof
 1. Capture a 30-second CPU profile:
 ```bash
-curl http://localhost:6060/debug/pprof/profile?seconds=30 > cpu.prof
+curl http://localhost:6062/debug/pprof/profile?seconds=30 > cpu.prof
 ```
 
 2. Analyze the profile:

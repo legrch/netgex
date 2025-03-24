@@ -18,7 +18,7 @@ docker compose up -d
 ```
 
 This will start:
-- OpenTelemetry Collector: localhost:4318 (HTTP)
+- OpenTelemetry Collector: http://localhost:4318 (HTTP)
 - Tempo: http://localhost:3200
 - Prometheus: http://localhost:9090
 - Pyroscope: http://localhost:4040
@@ -39,9 +39,11 @@ The app will:
 
 ## Endpoints
 
-- HTTP API: http://localhost:8080
-- gRPC: localhost:9090
-- Metrics: http://localhost:9091/metrics
+The app uses non-standard ports to avoid conflicts:
+- HTTP API: http://localhost:8081 (changed from 8080)
+- gRPC: localhost:50051 (changed from 9090)
+- Metrics: http://localhost:9092/metrics (changed from 9091)
+- pprof: http://localhost:6061/debug/pprof (changed from 6060)
 
 ## Exploring the Data
 

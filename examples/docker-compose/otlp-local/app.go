@@ -28,16 +28,18 @@ func main() {
 	cfg.ServiceVersion = getEnv("SERVICE_VERSION", "1.0.0")
 	cfg.Environment = getEnv("ENVIRONMENT", "development")
 
-	// Configure server addresses
-	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":9090")
-	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8080")
-	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9091")
+	// Configure server addresses - using different ports to avoid conflicts
+	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":50051")      // Changed from :9090
+	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8081")       // Changed from :8080
+	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9092") // Changed from :9091
+	cfg.PprofAddress = getEnv("PPROF_ADDRESS", ":6061")     // Changed from :6060
 
 	// Configure telemetry - OTLP setup
 	// Tracing with OTLP
 	cfg.Telemetry.Tracing.Enabled = true
 	cfg.Telemetry.Tracing.Backend = "otlp"
-	cfg.Telemetry.Tracing.Endpoint = getEnv("TRACING_ENDPOINT", "otel-collector:4318")
+	// Use localhost instead of container names when running locally
+	cfg.Telemetry.Tracing.Endpoint = getEnv("TRACING_ENDPOINT", "localhost:4318")
 	cfg.Telemetry.Tracing.SampleRate = 1.0 // 100% sampling for demo
 
 	// Metrics with Prometheus
@@ -48,7 +50,8 @@ func main() {
 	// Profiling with Pyroscope
 	cfg.Telemetry.Profiling.Enabled = true
 	cfg.Telemetry.Profiling.Backend = "pyroscope"
-	cfg.Telemetry.Profiling.Endpoint = getEnv("PROFILING_ENDPOINT", "http://pyroscope:4040")
+	// Use localhost instead of container names
+	cfg.Telemetry.Profiling.Endpoint = getEnv("PROFILING_ENDPOINT", "http://localhost:4040")
 
 	// Create the server with telemetry enabled
 	srv := server.NewServer(
@@ -71,6 +74,7 @@ func main() {
 	log.Printf("HTTP endpoint: http://localhost%s", cfg.HTTPAddress)
 	log.Printf("gRPC endpoint: localhost%s", cfg.GRPCAddress)
 	log.Printf("Metrics endpoint: http://localhost%s/metrics", cfg.MetricsAddress)
+	log.Printf("pprof endpoint: http://localhost%s/debug/pprof", cfg.PprofAddress)
 	log.Println("Grafana: http://localhost:3000")
 	log.Println("Prometheus: http://localhost:9090")
 	log.Println("Pyroscope: http://localhost:4040")

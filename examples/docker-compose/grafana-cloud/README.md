@@ -46,9 +46,11 @@ The app will:
 
 ## Endpoints
 
-- HTTP API: http://localhost:8080
-- gRPC: localhost:9090
-- Metrics: http://localhost:9091/metrics
+The app uses non-standard ports to avoid conflicts:
+- HTTP API: http://localhost:8083
+- gRPC: localhost:50053
+- Metrics: http://localhost:9094/metrics
+- pprof: http://localhost:6063/debug/pprof
 
 ## Exploring the Data
 

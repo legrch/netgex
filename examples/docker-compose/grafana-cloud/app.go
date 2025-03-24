@@ -29,10 +29,11 @@ func main() {
 	cfg.ServiceVersion = getEnv("SERVICE_VERSION", "1.0.0")
 	cfg.Environment = getEnv("ENVIRONMENT", "production")
 
-	// Configure server addresses
-	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":9090")
-	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8080")
-	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9091")
+	// Configure server addresses - using different ports to avoid conflicts
+	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":50053")      // Changed from :9090
+	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8083")       // Changed from :8080
+	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9094") // Changed from :9091
+	cfg.PprofAddress = getEnv("PPROF_ADDRESS", ":6063")     // Changed from :6060
 
 	// Configure telemetry - Grafana Cloud setup
 	apiKey := getEnv("GRAFANA_CLOUD_API_KEY", "")
@@ -87,6 +88,7 @@ func main() {
 	log.Printf("HTTP endpoint: http://localhost%s", cfg.HTTPAddress)
 	log.Printf("gRPC endpoint: localhost%s", cfg.GRPCAddress)
 	log.Printf("Metrics endpoint: http://localhost%s/metrics", cfg.MetricsAddress)
+	log.Printf("pprof endpoint: http://localhost%s/debug/pprof", cfg.PprofAddress)
 	log.Println("Grafana Cloud data should be visible at your Grafana Cloud instance")
 	log.Println("Local Grafana: http://localhost:3000")
 

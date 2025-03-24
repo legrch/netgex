@@ -29,17 +29,17 @@ func main() {
 	cfg.ServiceVersion = getEnv("SERVICE_VERSION", "1.0.0")
 	cfg.Environment = getEnv("ENVIRONMENT", "development")
 
-	// Configure server addresses
-	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":9090")
-	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8080")
-	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9091")
-	cfg.PprofAddress = getEnv("PPROF_ADDRESS", ":6060")
+	// Configure server addresses - using different ports to avoid conflicts
+	cfg.GRPCAddress = getEnv("GRPC_ADDRESS", ":50052")      // Changed from :9090
+	cfg.HTTPAddress = getEnv("HTTP_ADDRESS", ":8082")       // Changed from :8080
+	cfg.MetricsAddress = getEnv("METRICS_ADDRESS", ":9093") // Changed from :9091
+	cfg.PprofAddress = getEnv("PPROF_ADDRESS", ":6062")     // Changed from :6060
 
 	// Configure telemetry - Legacy setup
-	// Tracing with Jaeger
+	// Tracing with Jaeger - use localhost instead of container names
 	cfg.Telemetry.Tracing.Enabled = true
 	cfg.Telemetry.Tracing.Backend = "jaeger"
-	cfg.Telemetry.Tracing.Endpoint = getEnv("TRACING_ENDPOINT", "http://jaeger:14268/api/traces")
+	cfg.Telemetry.Tracing.Endpoint = getEnv("TRACING_ENDPOINT", "http://localhost:14268/api/traces")
 	cfg.Telemetry.Tracing.SampleRate = 1.0 // 100% sampling for demo
 
 	// Metrics with Prometheus
