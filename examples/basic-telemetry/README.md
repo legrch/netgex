@@ -9,7 +9,7 @@ This example demonstrates how to test the telemetry system in NetGeX, showing:
 
 ```bash
 # Run the test application directly
-go run test.go
+go run cmd/test/main.go
 
 # Check the endpoints
 curl http://localhost:9091/metrics
