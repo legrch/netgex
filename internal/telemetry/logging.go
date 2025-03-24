@@ -17,6 +17,26 @@ func (s *Service) setupLogging(ctx context.Context) error {
 		return nil
 	}
 
+	// If we already have a logger set by WithLogger, we respect it
+	// but still add service attributes if not already present
+	if s.logger != nil {
+		// Add service context to logs if not already present
+		s.logger = s.logger.With(
+			"service", s.config.ServiceName,
+			"version", s.config.ServiceVersion,
+			"environment", s.config.Environment,
+		)
+
+		// Set as default logger if requested
+		if cfg.Backend == "global" {
+			slog.SetDefault(s.logger)
+			s.logger.Info("setting logger as global default")
+		}
+
+		s.logger.Info("using existing logger provided via WithLogger")
+		return nil
+	}
+
 	// Determine log level
 	var level slog.Level
 	switch cfg.Level {
@@ -63,7 +83,12 @@ func (s *Service) setupLogging(ctx context.Context) error {
 
 	// Create logger
 	logger := slog.New(handler)
-	slog.SetDefault(logger)
+	s.logger = logger
+
+	// Set as global default logger if requested
+	if cfg.Backend == "global" {
+		slog.SetDefault(logger)
+	}
 
 	// If we're using a backend like OTLP, we'd configure it here
 	if cfg.Backend == "otlp" && cfg.Endpoint != "" {

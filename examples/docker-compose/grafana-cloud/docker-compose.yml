@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  app:
+    image: netgex:latest
+    build: ../../..
+    environment:
+      # Service info
+      - SERVICE_NAME=netgex
+      - SERVICE_VERSION=1.0.0
+      - ENVIRONMENT=production
+      
+      # Server config
+      - GRPC_ADDRESS=:9090
+      - HTTP_ADDRESS=:8080
+      - METRICS_ADDRESS=:9091
+      
+      # Telemetry config - Grafana Cloud
+      - TRACING_ENABLED=true
+      - TRACING_BACKEND=otlp
+      - TRACING_ENDPOINT=tempo-us-central1.grafana.net:4318
+      - TRACING_INSECURE=false
+      
+      - METRICS_ENABLED=true 
+      - METRICS_BACKEND=otlp
+      - METRICS_ENDPOINT=prometheus-us-central1.grafana.net:4318
+      - METRICS_INSECURE=false
+      
+      - PROFILING_ENABLED=true
+      - PROFILING_BACKEND=pyroscope
+      - PROFILING_ENDPOINT=profiles-prod-006.grafana.net:4040
+      
+      # Grafana Cloud API key (replace with a real key in production)
+      - GRAFANA_CLOUD_API_KEY=${GRAFANA_CLOUD_API_KEY}
+    ports:
+      - "8080:8080"  # HTTP
+      - "9090:9090"  # gRPC
+      - "9091:9091"  # Metrics
+
+  # Optional: Local development proxy to see metrics/traces without Grafana Cloud
+  grafana-local:
+    image: grafana/grafana:latest
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      # Configure Grafana Cloud as datasource
+      - GF_DATASOURCES_GRAFANACLOUD_URL=https://grafana.com/api/datasources/proxy
+      - GF_DATASOURCES_GRAFANACLOUD_TYPE=prometheus
+      - GF_DATASOURCES_GRAFANACLOUD_ACCESS=proxy
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTH=true
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTHUSER=api_key
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTHPASSWORD=${GRAFANA_CLOUD_API_KEY}
+    ports:
+      - "3000:3000" 

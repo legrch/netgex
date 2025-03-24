@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/pyroscope-io/client/pyroscope"
+	"github.com/pyroscope-io/client"
 )
 
 // setupProfiling configures continuous profiling based on the provided configuration
@@ -23,7 +23,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 		// Configure Pyroscope profiler
 		profileTypes := parseProfileTypes(cfg.Types)
 
-		profiler, err := pyroscope.Start(pyroscope.Config{
+		profiler, err := client.Start(client.Config{
 			ApplicationName: s.config.ServiceName,
 			ServerAddress:   cfg.Endpoint,
 			Logger:          newPyroscopeLogger(s.logger),
@@ -44,9 +44,19 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 			"endpoint", cfg.Endpoint,
 			"types", cfg.Types)
 
+	case "pprof":
+		// We're using the internal/pprof package which is already configured
+		// in the server.Run() method, so we just log that we're using it
+		s.logger.Info("using pprof profiler on address", "address", s.config.PprofAddress)
+		return nil
+
 	case "otlp":
 		s.logger.Info("OTLP profiling is not fully supported yet")
 		// Future: implement OTLP profiles when standard is more mature
+		return nil
+
+	case "none":
+		s.logger.Info("profiling is explicitly disabled")
 		return nil
 
 	default:
@@ -58,7 +68,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 }
 
 // newPyroscopeLogger creates a logger adapter for Pyroscope that uses slog
-func newPyroscopeLogger(logger *slog.Logger) pyroscope.Logger {
+func newPyroscopeLogger(logger *slog.Logger) client.Logger {
 	return &pyroscopeLoggerAdapter{logger: logger}
 }
 
@@ -80,16 +90,16 @@ func (l *pyroscopeLoggerAdapter) Debugf(format string, args ...interface{}) {
 }
 
 // parseProfileTypes converts a comma-separated string of profile types to Pyroscope types
-func parseProfileTypes(types string) []pyroscope.ProfileType {
-	var profileTypes []pyroscope.ProfileType
+func parseProfileTypes(types string) []client.ProfileType {
+	var profileTypes []client.ProfileType
 
-	typeMap := map[string]pyroscope.ProfileType{
-		"cpu":       pyroscope.ProfileCPU,
-		"heap":      pyroscope.ProfileAllocObjects,
-		"alloc":     pyroscope.ProfileAllocSpace,
-		"goroutine": pyroscope.ProfileGoroutines,
-		"mutex":     pyroscope.ProfileMutexCount,
-		"block":     pyroscope.ProfileBlockCount,
+	typeMap := map[string]client.ProfileType{
+		"cpu":       client.ProfileCPU,
+		"heap":      client.ProfileAllocObjects,
+		"alloc":     client.ProfileAllocSpace,
+		"goroutine": client.ProfileGoroutines,
+		"mutex":     client.ProfileMutexCount,
+		"block":     client.ProfileBlockCount,
 	}
 
 	for _, t := range strings.Split(types, ",") {
@@ -100,7 +110,7 @@ func parseProfileTypes(types string) []pyroscope.ProfileType {
 
 	// Default to CPU if no valid types
 	if len(profileTypes) == 0 {
-		profileTypes = append(profileTypes, pyroscope.ProfileCPU)
+		profileTypes = append(profileTypes, client.ProfileCPU)
 	}
 
 	return profileTypes
