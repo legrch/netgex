@@ -14,7 +14,7 @@ This example demonstrates how to use the NetGeX telemetry system with modern Ope
 First, start the required infrastructure using Docker Compose:
 
 ```bash
-docker compose up -d otel-collector prometheus tempo pyroscope grafana
+docker compose up -d
 ```
 
 This will start:
@@ -26,7 +26,7 @@ This will start:
 
 ### 2. Run the Example App
 
-Instead of using the `netgex` Docker image, you can run the example app directly:
+Run the example app directly:
 
 ```bash
 go run app.go

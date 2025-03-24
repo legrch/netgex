@@ -25,7 +25,7 @@ export GRAFANA_CLOUD_API_KEY="your-api-key"
 If you want to view your Grafana Cloud data locally:
 
 ```bash
-docker compose up -d grafana-local
+docker compose up -d
 ```
 
 This will start:
@@ -33,7 +33,7 @@ This will start:
 
 ### 3. Run the Example App
 
-Instead of using the `netgex` Docker image, you can run the example app directly:
+Run the example app directly:
 
 ```bash
 go run app.go

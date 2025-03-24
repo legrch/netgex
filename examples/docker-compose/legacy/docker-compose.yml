@@ -1,38 +1,6 @@
 version: "3.8"
 
 services:
-  app:
-    image: netgex:latest
-    build: ../../..
-    environment:
-      # Service info
-      - SERVICE_NAME=netgex
-      - SERVICE_VERSION=1.0.0
-      - ENVIRONMENT=development
-      
-      # Server config
-      - GRPC_ADDRESS=:9090
-      - HTTP_ADDRESS=:8080
-      - METRICS_ADDRESS=:9091
-      - PPROF_ADDRESS=:6060
-      
-      # Telemetry config - Legacy
-      - TRACING_ENABLED=true
-      - TRACING_BACKEND=jaeger
-      - TRACING_ENDPOINT=http://jaeger:14268/api/traces
-      - METRICS_ENABLED=true 
-      - METRICS_BACKEND=prometheus
-      - PROFILING_ENABLED=true
-      - PROFILING_BACKEND=pprof
-    ports:
-      - "8080:8080"  # HTTP
-      - "9090:9090"  # gRPC
-      - "9091:9091"  # Metrics
-      - "6060:6060"  # pprof
-    depends_on:
-      - jaeger
-      - prometheus
-
   prometheus:
     image: prom/prometheus:latest
     command:
