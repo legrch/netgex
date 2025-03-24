@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/internal/telemetry"
 	"github.com/legrch/netgex/service"
 	"github.com/legrch/netgex/splash"
 
@@ -45,6 +46,7 @@ type Server struct {
 	gwServerMuxOptions           []runtime.ServeMuxOption
 	gwCORSEnabled                bool
 	gwCORSOptions                cors.Options
+	telemetryEnabled             bool
 }
 
 // NewServer creates a new Server with the given options
@@ -69,6 +71,26 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	s.logger.Info("starting application")
+
+	// Initialize telemetry if enabled
+	var telemetryService *telemetry.Service
+	if s.telemetryEnabled {
+		telemetryService = telemetry.NewService(s.logger, s.cfg)
+		s.processes = append(s.processes, telemetryService)
+
+		// Add telemetry interceptors to our existing interceptors
+		if telemetryService != nil {
+			s.grpcUnaryServerInterceptors = append(
+				telemetryService.GetUnaryInterceptors(),
+				s.grpcUnaryServerInterceptors...,
+			)
+
+			s.grpcStreamServerInterceptors = append(
+				telemetryService.GetStreamInterceptors(),
+				s.grpcStreamServerInterceptors...,
+			)
+		}
+	}
 
 	// Create gRPC server
 	grpcServer := grpcserver.NewServer(
@@ -198,6 +220,27 @@ func (s *Server) displaySplash() {
 	// Add swagger if enabled
 	if s.cfg.SwaggerEnabled {
 		splashOpts = append(splashOpts, splash.WithSwaggerBasePath(s.cfg.SwaggerBasePath))
+	}
+
+	// Add telemetry features if enabled
+	if s.telemetryEnabled {
+		if s.cfg.Telemetry.Tracing.Enabled {
+			splashOpts = append(splashOpts, splash.WithFeature(
+				fmt.Sprintf("Tracing (%s)", s.cfg.Telemetry.Tracing.Backend),
+			))
+		}
+
+		if s.cfg.Telemetry.Metrics.Enabled {
+			splashOpts = append(splashOpts, splash.WithFeature(
+				fmt.Sprintf("Metrics (%s)", s.cfg.Telemetry.Metrics.Backend),
+			))
+		}
+
+		if s.cfg.Telemetry.Profiling.Enabled {
+			splashOpts = append(splashOpts, splash.WithFeature(
+				fmt.Sprintf("Profiling (%s)", s.cfg.Telemetry.Profiling.Backend),
+			))
+		}
 	}
 
 	// Create and display splash
