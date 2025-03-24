@@ -34,7 +34,7 @@ func main() {
 	// cfg.Telemetry.Tracing.Endpoint = "http://localhost:14268/api/traces"
 
 	// Create the server with telemetry enabled
-	srv := server.New(
+	srv := server.NewServer(
 		server.WithConfig(cfg),
 		server.WithTelemetry(),
 	)

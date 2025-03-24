@@ -22,7 +22,7 @@ func main() {
 	}))
 
 	// Method 1: Configuration via options
-	srv := server.New(
+	srv := server.NewServer(
 		// Basic configuration
 		server.WithLogger(logger),
 
@@ -56,7 +56,7 @@ func main() {
 		cfg.Telemetry.Profiling.Backend = "pyroscope"
 		cfg.Telemetry.Profiling.Endpoint = "http://pyroscope:4040"
 
-		srv := server.New(
+		srv := server.NewServer(
 			server.WithConfig(cfg),
 			server.WithTelemetry(),
 		)
@@ -80,7 +80,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		srv := server.New(
+		srv := server.NewServer(
 			server.WithConfig(cfg),
 			server.WithTelemetry(),
 		)
