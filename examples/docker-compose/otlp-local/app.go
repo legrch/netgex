@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,8 +13,15 @@ import (
 
 	"github.com/legrch/netgex/config"
 	"github.com/legrch/netgex/server"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
+// Global variables
+var tracer trace.Tracer
+
+// Main application entry point
 func main() {
 	// Create a context that listens for termination signals
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -67,6 +76,12 @@ func main() {
 		}
 	}()
 
+	// Get a tracer from the global provider
+	tracer = otel.Tracer("manual-trace-generator")
+
+	// Start HTTP server for explicit trace generation
+	go startTraceServer()
+
 	// Simulate some load to generate metrics/traces/profiles
 	go generateLoad()
 
@@ -79,10 +94,29 @@ func main() {
 	log.Println("Prometheus: http://localhost:9090")
 	log.Println("Pyroscope: http://localhost:4040")
 	log.Println("Tempo (via Grafana): http://localhost:3000/explore (select Tempo)")
+	log.Println("For explicit trace generation: http://localhost:8099/trace")
 
 	// Wait for termination signal
 	<-ctx.Done()
 	log.Println("Shutting down...")
+}
+
+// startTraceServer starts a simple HTTP server for generating traces
+func startTraceServer() {
+	mux := http.NewServeMux()
+
+	// Handler to generate a complex trace
+	mux.HandleFunc("/trace", func(w http.ResponseWriter, r *http.Request) {
+		// Create a new trace
+		GenerateComplexTrace()
+		fmt.Fprintf(w, "Trace generated! Check Tempo in Grafana.")
+	})
+
+	// Run the server
+	log.Println("Starting trace generator server on :8099...")
+	if err := http.ListenAndServe(":8099", mux); err != nil {
+		log.Fatalf("Failed to start trace server: %v", err)
+	}
 }
 
 func generateLoad() {
@@ -93,6 +127,11 @@ func generateLoad() {
 
 		// Simulate slow operations for tracing
 		simulateSlowOperations()
+
+		// Generate an explicit trace periodically
+		if rand.Intn(10) == 0 { // 10% chance
+			GenerateSimpleTrace()
+		}
 
 		// Random delay between operations
 		time.Sleep(time.Duration(rand.Intn(50)) * time.Millisecond)
