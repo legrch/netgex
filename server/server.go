@@ -27,6 +27,22 @@ const (
 	StartupDelay = 100 * time.Millisecond
 )
 
+// parseLogLevel converts a string log level to slog.Level
+func parseLogLevel(level string) slog.Level {
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
 // Process is an interface for components that can be started and stopped
 type Process interface {
 	PreRun(ctx context.Context) error
@@ -67,6 +83,8 @@ func NewServer(opts ...Option) *Server {
 func (s *Server) Run(ctx context.Context) error {
 	if s.logger == nil {
 		s.logger = slog.Default()
+		// Set LogLevel from config
+		slog.SetLogLoggerLevel(parseLogLevel(s.cfg.LogLevel))
 	}
 
 	s.logger.Info("starting application")
@@ -120,7 +138,7 @@ func (s *Server) Run(ctx context.Context) error {
 	systemProcesses := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
 
 	s.addProcesses(systemProcesses...)
-	// Run PreRun for all processes 
+	// Run PreRun for all processes
 	for _, p := range s.processes {
 		if err := p.PreRun(ctx); err != nil {
 			return fmt.Errorf("pre-run error: %w", err)
