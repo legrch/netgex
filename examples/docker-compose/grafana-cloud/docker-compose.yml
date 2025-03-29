@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  # Local development proxy to see metrics/traces without full Grafana Cloud access
+  grafana-local:
+    image: grafana/grafana:latest
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      # Configure Grafana Cloud as datasource
+      - GF_DATASOURCES_GRAFANACLOUD_URL=https://grafana.com/api/datasources/proxy
+      - GF_DATASOURCES_GRAFANACLOUD_TYPE=prometheus
+      - GF_DATASOURCES_GRAFANACLOUD_ACCESS=proxy
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTH=true
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTHUSER=api_key
+      - GF_DATASOURCES_GRAFANACLOUD_BASICAUTHPASSWORD=${GRAFANA_CLOUD_API_KEY}
+    ports:
+      - "3000:3000" 

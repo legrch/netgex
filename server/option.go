@@ -145,3 +145,52 @@ func WithSwaggerBasePath(path string) Option {
 		s.cfg.SwaggerBasePath = path
 	}
 }
+
+// WithTelemetry enables telemetry for the server with the given configuration
+func WithTelemetry() Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+	}
+}
+
+// WithTracingBackend configures which tracing backend to use
+func WithTracingBackend(backend string, endpoint string) Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+		s.cfg.Telemetry.Tracing.Enabled = true
+		s.cfg.Telemetry.Tracing.Backend = backend
+		s.cfg.Telemetry.Tracing.Endpoint = endpoint
+	}
+}
+
+// WithMetricsBackend configures which metrics backend to use
+func WithMetricsBackend(backend string, endpoint string) Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+		s.cfg.Telemetry.Metrics.Enabled = true
+		s.cfg.Telemetry.Metrics.Backend = backend
+		s.cfg.Telemetry.Metrics.Endpoint = endpoint
+	}
+}
+
+// WithProfilingBackend configures which profiling backend to use
+func WithProfilingBackend(backend string, endpoint string) Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+		s.cfg.Telemetry.Profiling.Enabled = true
+		s.cfg.Telemetry.Profiling.Backend = backend
+		s.cfg.Telemetry.Profiling.Endpoint = endpoint
+	}
+}
+
+// WithOTEL configures OpenTelemetry as a unified provider
+func WithOTEL(endpoint string, insecure bool) Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+		s.cfg.Telemetry.OTEL.Enabled = true
+		s.cfg.Telemetry.OTEL.Endpoint = endpoint
+		s.cfg.Telemetry.OTEL.Insecure = insecure
+		s.cfg.Telemetry.OTEL.TracesEnabled = true
+		s.cfg.Telemetry.OTEL.MetricsEnabled = true
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/legrch/netgex/config"
+	"github.com/legrch/netgex/internal/telemetry"
 	"github.com/legrch/netgex/service"
 	"github.com/legrch/netgex/splash"
 
@@ -25,6 +26,22 @@ const (
 	// StartupDelay is the time to wait for processes to start before displaying the splash screen
 	StartupDelay = 100 * time.Millisecond
 )
+
+// parseLogLevel converts a string log level to slog.Level
+func parseLogLevel(level string) slog.Level {
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
 
 // Process is an interface for components that can be started and stopped
 type Process interface {
@@ -45,6 +62,7 @@ type Server struct {
 	gwServerMuxOptions           []runtime.ServeMuxOption
 	gwCORSEnabled                bool
 	gwCORSOptions                cors.Options
+	telemetryEnabled             bool
 }
 
 // NewServer creates a new Server with the given options
@@ -63,12 +81,22 @@ func NewServer(opts ...Option) *Server {
 
 // Run starts the Server and all its processes
 func (s *Server) Run(ctx context.Context) error {
-
 	if s.logger == nil {
 		s.logger = slog.Default()
+		// Set LogLevel from config
+		slog.SetLogLoggerLevel(parseLogLevel(s.cfg.LogLevel))
 	}
 
 	s.logger.Info("starting application")
+
+	// Initialize telemetry if enabled
+	var telemetryService *telemetry.Service
+	if s.telemetryEnabled {
+		telemetryService = telemetry.NewService(s.logger, s.cfg)
+		s.addProcesses(telemetryService)
+		s.addGRPCUnaryInterceptors(telemetryService.GetUnaryInterceptors()...)
+		s.addGRPCStreamInterceptors(telemetryService.GetStreamInterceptors()...)
+	}
 
 	// Create gRPC server
 	grpcServer := grpcserver.NewServer(
@@ -82,20 +110,13 @@ func (s *Server) Run(ctx context.Context) error {
 		grpcserver.WithHealthCheck(s.cfg.HealthCheckEnabled),
 		grpcserver.WithOptions(s.grpcServerOptions...),
 	)
+	s.addProcesses(grpcServer)
 
 	// Create gateway server
 	gatewayOpts := []gateway.Option{
 		gateway.WithServices(s.services...),
-	}
-
-	// Add mux options if provided
-	if len(s.gwServerMuxOptions) > 0 {
-		gatewayOpts = append(gatewayOpts, gateway.WithMuxOptions(s.gwServerMuxOptions...))
-	}
-
-	// Add CORS if enabled
-	if s.gwCORSEnabled {
-		gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.gwCORSOptions))
+		gateway.WithMuxOptions(s.gwServerMuxOptions...),
+		gateway.WithCORS(&s.gwCORSOptions),
 	}
 
 	// Add swagger if configured
@@ -110,26 +131,30 @@ func (s *Server) Run(ctx context.Context) error {
 		s.cfg.HTTPAddress,
 		gatewayOpts...,
 	)
+	s.addProcesses(gatewayServer)
 
+	// Initialize metrics server
 	metricsServer := metrics.NewServer(s.logger, s.cfg.MetricsAddress, s.cfg.CloseTimeout)
-	pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
+	s.addProcesses(metricsServer)
 
-	// Add servers to processes
-	processes := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
-	processes = append(processes, s.processes...)
+	// Initialize pprof server
+	if s.cfg.PprofEnabled {
+		pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
+		s.addProcesses(pprofServer)
+	}
 
 	// Run PreRun for all processes
-	for _, p := range processes {
+	for _, p := range s.processes {
 		if err := p.PreRun(ctx); err != nil {
 			return fmt.Errorf("pre-run error: %w", err)
 		}
 	}
 
 	// Create error channel
-	errCh := make(chan error, len(processes))
+	errCh := make(chan error, len(s.processes))
 
 	// Start all processes
-	for i, p := range processes {
+	for i, p := range s.processes {
 		process := p
 		index := i
 
@@ -161,8 +186,8 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	// Shutdown all processes in reverse order
-	for i := len(processes) - 1; i >= 0; i-- {
-		p := processes[i]
+	for i := len(s.processes) - 1; i >= 0; i-- {
+		p := s.processes[i]
 		if shutdownErr := p.Shutdown(shutdownCtx); shutdownErr != nil {
 			s.logger.Error("shutdown error", "error", shutdownErr)
 			if err == nil {
@@ -173,6 +198,18 @@ func (s *Server) Run(ctx context.Context) error {
 
 	s.logger.Info("application stopped")
 	return err
+}
+
+func (s *Server) addProcesses(processes ...Process) {
+	s.processes = append(s.processes, processes...)
+}
+
+func (s *Server) addGRPCUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor) {
+	s.grpcUnaryServerInterceptors = append(s.grpcUnaryServerInterceptors, interceptors...)
+}
+
+func (s *Server) addGRPCStreamInterceptors(interceptors ...grpc.StreamServerInterceptor) {
+	s.grpcStreamServerInterceptors = append(s.grpcStreamServerInterceptors, interceptors...)
 }
 
 // displaySplash initializes and displays the splash screen
@@ -198,6 +235,49 @@ func (s *Server) displaySplash() {
 	// Add swagger if enabled
 	if s.cfg.SwaggerEnabled {
 		splashOpts = append(splashOpts, splash.WithSwaggerBasePath(s.cfg.SwaggerBasePath))
+	}
+
+	// Add telemetry features if enabled
+	if s.telemetryEnabled {
+		if s.cfg.Telemetry.OTEL.Enabled {
+			splashOpts = append(splashOpts, splash.WithFeature(
+				"OpenTelemetry",
+			))
+			if s.cfg.Telemetry.OTEL.TracesEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Traces",
+				))
+			}
+			if s.cfg.Telemetry.OTEL.MetricsEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Metrics",
+				))
+			}
+			if s.cfg.Telemetry.OTEL.LogsEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Logs",
+				))
+			}
+		} else {
+			// Only show individual backend information if OTEL is not enabled
+			if s.cfg.Telemetry.Tracing.Enabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					fmt.Sprintf("Tracing (%s)", s.cfg.Telemetry.Tracing.Backend),
+				))
+			}
+
+			if s.cfg.Telemetry.Metrics.Enabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					fmt.Sprintf("Metrics (%s)", s.cfg.Telemetry.Metrics.Backend),
+				))
+			}
+		}
+
+		if s.cfg.Telemetry.Profiling.Enabled {
+			splashOpts = append(splashOpts, splash.WithFeature(
+				fmt.Sprintf("Profiling (%s)", s.cfg.Telemetry.Profiling.Backend),
+			))
+		}
 	}
 
 	// Create and display splash
