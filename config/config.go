@@ -16,6 +16,7 @@ type Config struct {
 	GRPCAddress    string `envconfig:"GRPC_ADDRESS" default:":9090"`
 	HTTPAddress    string `envconfig:"HTTP_ADDRESS" default:":8080"`
 	MetricsAddress string `envconfig:"METRICS_ADDRESS" default:":9091"`
+	PprofEnabled   bool   `envconfig:"PPROF_ENABLED" default:"true"`
 	PprofAddress   string `envconfig:"PPROF_ADDRESS" default:":6060"`
 
 	// Feature flags
@@ -116,6 +117,7 @@ func NewConfig() *Config {
 		GRPCAddress:        ":9090",
 		HTTPAddress:        ":8080",
 		MetricsAddress:     ":9091",
+		PprofEnabled:       true,
 		PprofAddress:       ":6060",
 		ReflectionEnabled:  true,
 		HealthCheckEnabled: true,

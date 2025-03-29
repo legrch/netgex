@@ -9,7 +9,7 @@ import (
 )
 
 // setupLogging configures structured logging based on the provided configuration
-func (s *Service) setupLogging(ctx context.Context) error {
+func (s *Service) setupLogging(_ context.Context) error {
 	cfg := s.config.Telemetry.Logging
 
 	if !cfg.Enabled {

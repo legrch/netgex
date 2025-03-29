@@ -110,6 +110,7 @@ func (s *Server) Run(ctx context.Context) error {
 		grpcserver.WithHealthCheck(s.cfg.HealthCheckEnabled),
 		grpcserver.WithOptions(s.grpcServerOptions...),
 	)
+	s.addProcesses(grpcServer)
 
 	// Create gateway server
 	gatewayOpts := []gateway.Option{
@@ -130,17 +131,18 @@ func (s *Server) Run(ctx context.Context) error {
 		s.cfg.HTTPAddress,
 		gatewayOpts...,
 	)
+	s.addProcesses(gatewayServer)
 
 	// Initialize metrics server
 	metricsServer := metrics.NewServer(s.logger, s.cfg.MetricsAddress, s.cfg.CloseTimeout)
+	s.addProcesses(metricsServer)
 
 	// Initialize pprof server
-	pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
+	if s.cfg.PprofEnabled {
+		pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
+		s.addProcesses(pprofServer)
+	}
 
-	// Create system processes
-	systemProcesses := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
-
-	s.addProcesses(systemProcesses...)
 	// Run PreRun for all processes
 	for _, p := range s.processes {
 		if err := p.PreRun(ctx); err != nil {
