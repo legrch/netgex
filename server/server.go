@@ -65,7 +65,6 @@ func NewServer(opts ...Option) *Server {
 
 // Run starts the Server and all its processes
 func (s *Server) Run(ctx context.Context) error {
-
 	if s.logger == nil {
 		s.logger = slog.Default()
 	}
@@ -76,26 +75,9 @@ func (s *Server) Run(ctx context.Context) error {
 	var telemetryService *telemetry.Service
 	if s.telemetryEnabled {
 		telemetryService = telemetry.NewService(s.logger, s.cfg)
-		// s.processes = append(s.processes, telemetryService)
 		s.addProcesses(telemetryService)
-
-		// // Add telemetry interceptors to our existing interceptors
-		// if telemetryService != nil {
-		// 	s.grpcUnaryServerInterceptors = append(
-		// 		telemetryService.GetUnaryInterceptors(),
-		// 		s.grpcUnaryServerInterceptors...,
-		// 	)
-
-		// 	s.grpcStreamServerInterceptors = append(
-		// 		telemetryService.GetStreamInterceptors(),
-		// 		s.grpcStreamServerInterceptors...,
-		// 	)
-		// }
-
-		// Add telemetry interceptors to our existing interceptors
 		s.addGRPCUnaryInterceptors(telemetryService.GetUnaryInterceptors()...)
 		s.addGRPCStreamInterceptors(telemetryService.GetStreamInterceptors()...)
-
 	}
 
 	// Create gRPC server
@@ -118,16 +100,6 @@ func (s *Server) Run(ctx context.Context) error {
 		gateway.WithCORS(&s.gwCORSOptions),
 	}
 
-	// Add mux options if provided
-	// if len(s.gwServerMuxOptions) > 0 {
-	// 	gatewayOpts = append(gatewayOpts, gateway.WithMuxOptions(s.gwServerMuxOptions...))
-	// }
-
-	// Add CORS if enabled
-	// if s.gwCORSEnabled {
-	// 	gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.gwCORSOptions))
-	// }
-
 	// Add swagger if configured
 	if s.cfg.SwaggerEnabled {
 		gatewayOpts = append(gatewayOpts, gateway.WithSwagger(s.cfg.SwaggerDir, s.cfg.SwaggerBasePath))
@@ -144,22 +116,22 @@ func (s *Server) Run(ctx context.Context) error {
 	metricsServer := metrics.NewServer(s.logger, s.cfg.MetricsAddress, s.cfg.CloseTimeout)
 	pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
 
-	// Add servers to processes
-	processes := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
-	s.processes = append(s.processes, processes...)
+	// Create system processes
+	systemProcesses := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
 
-	// Run PreRun for all processes
-	for _, p := range processes {
+	// Run PreRun for all processes (both mock and system)
+	allProcesses := append(s.processes, systemProcesses...)
+	for _, p := range allProcesses {
 		if err := p.PreRun(ctx); err != nil {
 			return fmt.Errorf("pre-run error: %w", err)
 		}
 	}
 
 	// Create error channel
-	errCh := make(chan error, len(processes))
+	errCh := make(chan error, len(allProcesses))
 
 	// Start all processes
-	for i, p := range processes {
+	for i, p := range allProcesses {
 		process := p
 		index := i
 
@@ -191,8 +163,8 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	// Shutdown all processes in reverse order
-	for i := len(processes) - 1; i >= 0; i-- {
-		p := processes[i]
+	for i := len(allProcesses) - 1; i >= 0; i-- {
+		p := allProcesses[i]
 		if shutdownErr := p.Shutdown(shutdownCtx); shutdownErr != nil {
 			s.logger.Error("shutdown error", "error", shutdownErr)
 			if err == nil {
