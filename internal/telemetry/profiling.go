@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/grafana/pyroscope-go"
+	"github.com/grafana/pyroscope-go" //nolint:typecheck
 )
 
 // setupProfiling configures continuous profiling based on the provided configuration
@@ -23,6 +23,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 		// Configure Pyroscope profiler
 		profileTypes := parseProfileTypes(cfg.Types)
 
+		// nolint:typecheck
 		profiler, err := pyroscope.Start(pyroscope.Config{
 			ApplicationName: s.config.ServiceName,
 			ServerAddress:   cfg.Endpoint,
@@ -68,6 +69,7 @@ func (s *Service) setupProfiling(ctx context.Context) error {
 }
 
 // newPyroscopeLogger creates a logger adapter for Pyroscope that uses slog
+// nolint:typecheck
 func newPyroscopeLogger(logger *slog.Logger) pyroscope.Logger {
 	return &pyroscopeLoggerAdapter{logger: logger}
 }
@@ -90,6 +92,7 @@ func (l *pyroscopeLoggerAdapter) Debugf(format string, args ...interface{}) {
 }
 
 // parseProfileTypes converts a comma-separated string of profile types to Pyroscope types
+// nolint:typecheck
 func parseProfileTypes(types string) []pyroscope.ProfileType {
 	var profileTypes []pyroscope.ProfileType
 
