@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - None
 
+## [1.1.0] - 2025-03-29
+
+### Added
+- Unified OpenTelemetry configuration (tracing, metrics, logging).
+- Support for Grafana and Pyroscope integrations.
+- HTTP endpoint for explicit trace generation.
+- Configurable log level and `pprof` profiling via config.
+- Dedicated telemetry server with new initialization logic.
+
+### Changed
+- Streamlined telemetry and metrics initialization in server run process.
+- Renamed telemetry variables for consistency (`meterProvider` → `meter`, etc.).
+- Updated Docker Compose configurations for OTLP and Tempo compatibility.
+- Improved documentation: telemetry guide and examples.
+
+### Removed
+- Obsolete `test.go` file and outdated JSONConfig explanation from guide.
+
 ## [1.0.0] - 2025-03-19
 
 ### Added
@@ -44,4 +62,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Profiling server with pprof
 - Configuration utilities
 - Terminal splash screen
-- Examples demonstrating various features 
+- Examples demonstrating various features
