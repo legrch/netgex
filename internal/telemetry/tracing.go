@@ -6,7 +6,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -56,13 +55,21 @@ func (s *Service) setupTracing(ctx context.Context) error {
 		s.logger.Info("initialized OTLP trace exporter", "endpoint", cfg.Endpoint)
 
 	case "jaeger":
-		// Create Jaeger exporter
-		exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(cfg.Endpoint)))
+		// Jaeger now recommends using OTLP
+		opts := []otlptracehttp.Option{
+			otlptracehttp.WithEndpoint(cfg.Endpoint),
+		}
+
+		if cfg.Insecure {
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
+
+		exp, err := otlptracehttp.New(ctx, opts...)
 		if err != nil {
-			return fmt.Errorf("failed to create Jaeger exporter: %w", err)
+			return fmt.Errorf("failed to create OTLP trace exporter for Jaeger: %w", err)
 		}
 		exporter = exp
-		s.logger.Info("initialized Jaeger trace exporter", "endpoint", cfg.Endpoint)
+		s.logger.Info("initialized OTLP trace exporter for Jaeger", "endpoint", cfg.Endpoint)
 
 	default:
 		return fmt.Errorf("unsupported tracing backend: %s", cfg.Backend)
