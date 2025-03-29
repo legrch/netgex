@@ -27,6 +27,18 @@ export SERVICE_NAME=netgex
 export SERVICE_VERSION=1.0.0
 export ENVIRONMENT=production
 
+# Unified OpenTelemetry Configuration (preferred approach)
+export OTEL_ENABLED=true
+export OTEL_ENDPOINT=otel-collector:4318
+export OTEL_INSECURE=true
+export OTEL_PROTOCOL=http  # http or grpc
+export OTEL_HEADERS="Authorization=Basic $API_KEY"  # Optional headers
+export OTEL_TRACES_ENABLED=true
+export OTEL_METRICS_ENABLED=true
+export OTEL_LOGS_ENABLED=false  # Experimental
+export OTEL_SAMPLE_RATE=0.1  # 10% sampling in production
+
+# Legacy Configuration (still supported)
 # Tracing Configuration
 export TRACING_ENABLED=true
 export TRACING_BACKEND=otlp  # Options: otlp, jaeger, none
@@ -61,39 +73,42 @@ srv := server.New(
     server.WithTelemetry(),
 )
 
-// Advanced usage - configure specific backends
+// Advanced usage - configure specific backends (legacy approach)
 srv := server.New(
-    server.WithLogger(logger),  // Your custom logger
-    server.WithConfig(cfg),     // Your custom config
-    
-    // Enable telemetry
     server.WithTelemetry(),
-    
-    // Configure backends
     server.WithTracingBackend("otlp", "otel-collector:4318"),
     server.WithMetricsBackend("prometheus", ""),
-    server.WithProfilingBackend("pyroscope", "http://pyroscope:4040"),
+    server.WithProfilingBackend("pprof", ""),
 )
 
-// Full programmatic configuration
-cfg := config.NewConfig()
-cfg.Telemetry.Tracing.Enabled = true
-cfg.Telemetry.Tracing.Backend = "otlp"
-cfg.Telemetry.Tracing.Endpoint = "otel-collector:4318"
-cfg.Telemetry.Tracing.SampleRate = 1.0
-
-cfg.Telemetry.Metrics.Enabled = true
-cfg.Telemetry.Metrics.Backend = "prometheus"
-cfg.Telemetry.Metrics.Path = "/metrics"
-
-cfg.Telemetry.Profiling.Enabled = true
-cfg.Telemetry.Profiling.Backend = "pprof"
-
+// OpenTelemetry unified approach (preferred)
 srv := server.New(
-    server.WithConfig(cfg),
     server.WithTelemetry(),
+    server.WithOTEL("otel-collector:4318", true),  // endpoint, insecure
+    server.WithProfilingBackend("pprof", ""),  // Profiling is configured separately
 )
 ```
+
+## Unified OpenTelemetry vs Legacy Configuration
+
+NetGeX now supports two approaches to telemetry configuration:
+
+1. **Unified OpenTelemetry (OTEL)** - The preferred approach that configures all signals (traces, metrics, logs) through a single provider. This simplifies configuration and follows the OpenTelemetry project's vision of unified observability.
+
+2. **Legacy Configuration** - Configures each signal separately with different backends. Still supported for backward compatibility and when you need more fine-grained control.
+
+### When to use Unified OTEL:
+
+- For new applications
+- When using an OpenTelemetry Collector
+- When sending all telemetry data to the same endpoint
+- For simplified configuration
+
+### When to use Legacy Configuration:
+
+- When you need different backends for different signals
+- When integrating with non-OTLP systems
+- When you need maximum flexibility
 
 ## Deployment Scenarios
 

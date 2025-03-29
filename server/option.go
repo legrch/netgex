@@ -182,3 +182,15 @@ func WithProfilingBackend(backend string, endpoint string) Option {
 		s.cfg.Telemetry.Profiling.Endpoint = endpoint
 	}
 }
+
+// WithOTEL configures OpenTelemetry as a unified provider
+func WithOTEL(endpoint string, insecure bool) Option {
+	return func(s *Server) {
+		s.telemetryEnabled = true
+		s.cfg.Telemetry.OTEL.Enabled = true
+		s.cfg.Telemetry.OTEL.Endpoint = endpoint
+		s.cfg.Telemetry.OTEL.Insecure = insecure
+		s.cfg.Telemetry.OTEL.TracesEnabled = true
+		s.cfg.Telemetry.OTEL.MetricsEnabled = true
+	}
+}

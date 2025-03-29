@@ -10,14 +10,16 @@ import (
 
 // Service represents the telemetry service which handles tracing, metrics, logging, and profiling
 type Service struct {
-	logger   *slog.Logger
-	config   *config.Config
+	logger *slog.Logger
+	config *config.Config
 	// tracer is `otlp.TracerProvider`, `jaeger.Tracer`, or none
-	tracer   interface{ Shutdown(context.Context) error }
+	tracer interface{ Shutdown(context.Context) error }
 	// meter is `otlp.MeterProvider`, or none
-	meter    interface{ Shutdown(context.Context) error }
+	meter interface{ Shutdown(context.Context) error }
 	// profiler is `pyroscope.Profiler`, or none
 	profiler interface{ Stop() error }
+	// otelProvider is the unified OpenTelemetry provider if enabled
+	otelProvider interface{ Shutdown(context.Context) error }
 }
 
 // NewService creates a new telemetry service
@@ -32,19 +34,31 @@ func NewService(logger *slog.Logger, config *config.Config) *Service {
 func (s *Service) PreRun(ctx context.Context) error {
 	s.logger.Info("initializing telemetry services")
 
-	// Initialize each component based on configuration
+	// Initialize logging first for better diagnostics
 	if err := s.setupLogging(ctx); err != nil {
 		return fmt.Errorf("failed to set up logging: %w", err)
 	}
 
-	if err := s.setupTracing(ctx); err != nil {
-		return fmt.Errorf("failed to set up tracing: %w", err)
+	// Check if OpenTelemetry unified configuration is enabled
+	if s.config.Telemetry.OTEL.Enabled {
+		// If OTEL is enabled, use it as the primary provider
+		if err := s.setupOTEL(ctx); err != nil {
+			return fmt.Errorf("failed to set up OpenTelemetry: %w", err)
+		}
+	} else {
+		// Otherwise, initialize separate components based on configuration
+		// Legacy tracing setup
+		if err := s.setupTracing(ctx); err != nil {
+			return fmt.Errorf("failed to set up tracing: %w", err)
+		}
+
+		// Legacy metrics setup
+		if err := s.setupMetrics(ctx); err != nil {
+			return fmt.Errorf("failed to set up metrics: %w", err)
+		}
 	}
 
-	if err := s.setupMetrics(ctx); err != nil {
-		return fmt.Errorf("failed to set up metrics: %w", err)
-	}
-
+	// Profiling is always set up separately
 	if err := s.setupProfiling(ctx); err != nil {
 		return fmt.Errorf("failed to set up profiling: %w", err)
 	}
@@ -76,6 +90,13 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	if s.meter != nil {
 		if err := s.meter.Shutdown(ctx); err != nil {
 			errs = append(errs, fmt.Errorf("meter provider shutdown: %w", err))
+		}
+	}
+
+	// Shutdown unified OTEL provider if exists
+	if s.otelProvider != nil {
+		if err := s.otelProvider.Shutdown(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("OTEL provider shutdown: %w", err))
 		}
 	}
 

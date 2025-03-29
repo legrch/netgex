@@ -76,20 +76,26 @@ func (s *Server) Run(ctx context.Context) error {
 	var telemetryService *telemetry.Service
 	if s.telemetryEnabled {
 		telemetryService = telemetry.NewService(s.logger, s.cfg)
-		s.processes = append(s.processes, telemetryService)
+		// s.processes = append(s.processes, telemetryService)
+		s.addProcesses(telemetryService)
+
+		// // Add telemetry interceptors to our existing interceptors
+		// if telemetryService != nil {
+		// 	s.grpcUnaryServerInterceptors = append(
+		// 		telemetryService.GetUnaryInterceptors(),
+		// 		s.grpcUnaryServerInterceptors...,
+		// 	)
+
+		// 	s.grpcStreamServerInterceptors = append(
+		// 		telemetryService.GetStreamInterceptors(),
+		// 		s.grpcStreamServerInterceptors...,
+		// 	)
+		// }
 
 		// Add telemetry interceptors to our existing interceptors
-		if telemetryService != nil {
-			s.grpcUnaryServerInterceptors = append(
-				telemetryService.GetUnaryInterceptors(),
-				s.grpcUnaryServerInterceptors...,
-			)
+		s.addGRPCUnaryInterceptors(telemetryService.GetUnaryInterceptors()...)
+		s.addGRPCStreamInterceptors(telemetryService.GetStreamInterceptors()...)
 
-			s.grpcStreamServerInterceptors = append(
-				telemetryService.GetStreamInterceptors(),
-				s.grpcStreamServerInterceptors...,
-			)
-		}
 	}
 
 	// Create gRPC server
@@ -108,17 +114,19 @@ func (s *Server) Run(ctx context.Context) error {
 	// Create gateway server
 	gatewayOpts := []gateway.Option{
 		gateway.WithServices(s.services...),
+		gateway.WithMuxOptions(s.gwServerMuxOptions...),
+		gateway.WithCORS(&s.gwCORSOptions),
 	}
 
 	// Add mux options if provided
-	if len(s.gwServerMuxOptions) > 0 {
-		gatewayOpts = append(gatewayOpts, gateway.WithMuxOptions(s.gwServerMuxOptions...))
-	}
+	// if len(s.gwServerMuxOptions) > 0 {
+	// 	gatewayOpts = append(gatewayOpts, gateway.WithMuxOptions(s.gwServerMuxOptions...))
+	// }
 
 	// Add CORS if enabled
-	if s.gwCORSEnabled {
-		gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.gwCORSOptions))
-	}
+	// if s.gwCORSEnabled {
+	// 	gatewayOpts = append(gatewayOpts, gateway.WithCORS(&s.gwCORSOptions))
+	// }
 
 	// Add swagger if configured
 	if s.cfg.SwaggerEnabled {
@@ -138,7 +146,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	// Add servers to processes
 	processes := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
-	processes = append(processes, s.processes...)
+	s.processes = append(s.processes, processes...)
 
 	// Run PreRun for all processes
 	for _, p := range processes {
@@ -197,6 +205,18 @@ func (s *Server) Run(ctx context.Context) error {
 	return err
 }
 
+func (s *Server) addProcesses(processes ...Process) {
+	s.processes = append(s.processes, processes...)
+}
+
+func (s *Server) addGRPCUnaryInterceptors(interceptors ...grpc.UnaryServerInterceptor) {
+	s.grpcUnaryServerInterceptors = append(s.grpcUnaryServerInterceptors, interceptors...)
+}
+
+func (s *Server) addGRPCStreamInterceptors(interceptors ...grpc.StreamServerInterceptor) {
+	s.grpcStreamServerInterceptors = append(s.grpcStreamServerInterceptors, interceptors...)
+}
+
 // displaySplash initializes and displays the splash screen
 func (s *Server) displaySplash() {
 	splashOpts := []splash.SplashOption{
@@ -224,16 +244,38 @@ func (s *Server) displaySplash() {
 
 	// Add telemetry features if enabled
 	if s.telemetryEnabled {
-		if s.cfg.Telemetry.Tracing.Enabled {
+		if s.cfg.Telemetry.OTEL.Enabled {
 			splashOpts = append(splashOpts, splash.WithFeature(
-				fmt.Sprintf("Tracing (%s)", s.cfg.Telemetry.Tracing.Backend),
+				"OpenTelemetry",
 			))
-		}
+			if s.cfg.Telemetry.OTEL.TracesEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Traces",
+				))
+			}
+			if s.cfg.Telemetry.OTEL.MetricsEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Metrics",
+				))
+			}
+			if s.cfg.Telemetry.OTEL.LogsEnabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					"  ↳ Logs",
+				))
+			}
+		} else {
+			// Only show individual backend information if OTEL is not enabled
+			if s.cfg.Telemetry.Tracing.Enabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					fmt.Sprintf("Tracing (%s)", s.cfg.Telemetry.Tracing.Backend),
+				))
+			}
 
-		if s.cfg.Telemetry.Metrics.Enabled {
-			splashOpts = append(splashOpts, splash.WithFeature(
-				fmt.Sprintf("Metrics (%s)", s.cfg.Telemetry.Metrics.Backend),
-			))
+			if s.cfg.Telemetry.Metrics.Enabled {
+				splashOpts = append(splashOpts, splash.WithFeature(
+					fmt.Sprintf("Metrics (%s)", s.cfg.Telemetry.Metrics.Backend),
+				))
+			}
 		}
 
 		if s.cfg.Telemetry.Profiling.Enabled {

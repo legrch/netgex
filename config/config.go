@@ -46,6 +46,8 @@ type TelemetryConfig struct {
 	Logging LoggingConfig
 	// Profiling configuration
 	Profiling ProfilingConfig
+	// OpenTelemetry configuration (unified approach)
+	OTEL OTELConfig
 }
 
 // TracingConfig configures distributed tracing
@@ -87,6 +89,23 @@ type ProfilingConfig struct {
 	Endpoint   string  `envconfig:"PROFILING_ENDPOINT" default:"http://localhost:4040"`
 	SampleRate float64 `envconfig:"PROFILING_SAMPLE_RATE" default:"1.0"`
 	Types      string  `envconfig:"PROFILING_TYPES" default:"cpu,heap"` // Comma-separated: "cpu,heap,goroutine,mutex,block"
+}
+
+// OTELConfig configures OpenTelemetry as a unified observability provider
+type OTELConfig struct {
+	Enabled  bool   `envconfig:"OTEL_ENABLED" default:"false"`
+	Endpoint string `envconfig:"OTEL_ENDPOINT" default:"localhost:4318"`
+	Insecure bool   `envconfig:"OTEL_INSECURE" default:"true"`
+	Headers  string `envconfig:"OTEL_HEADERS" default:""`      // Format: "key1=value1,key2=value2"
+	Protocol string `envconfig:"OTEL_PROTOCOL" default:"http"` // "http" or "grpc"
+
+	// Signal-specific configuration
+	TracesEnabled  bool          `envconfig:"OTEL_TRACES_ENABLED" default:"true"`
+	MetricsEnabled bool          `envconfig:"OTEL_METRICS_ENABLED" default:"true"`
+	LogsEnabled    bool          `envconfig:"OTEL_LOGS_ENABLED" default:"false"`
+	SampleRate     float64       `envconfig:"OTEL_SAMPLE_RATE" default:"1.0"`
+	BatchSize      int           `envconfig:"OTEL_BATCH_SIZE" default:"100"`
+	BatchTimeout   time.Duration `envconfig:"OTEL_BATCH_TIMEOUT" default:"5s"`
 }
 
 // NewConfig creates a new Config with default values
@@ -138,6 +157,19 @@ func NewConfig() *Config {
 				Endpoint:   "http://localhost:4040",
 				SampleRate: 1.0,
 				Types:      "cpu,heap",
+			},
+			OTEL: OTELConfig{
+				Enabled:        false,
+				Endpoint:       "localhost:4318",
+				Insecure:       true,
+				Headers:        "",
+				Protocol:       "http",
+				TracesEnabled:  true,
+				MetricsEnabled: true,
+				LogsEnabled:    false,
+				SampleRate:     1.0,
+				BatchSize:      100,
+				BatchTimeout:   5 * time.Second,
 			},
 		},
 	}
