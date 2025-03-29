@@ -119,19 +119,19 @@ func (s *Server) Run(ctx context.Context) error {
 	// Create system processes
 	systemProcesses := []Process{grpcServer, gatewayServer, metricsServer, pprofServer}
 
-	// Run PreRun for all processes (both mock and system)
-	allProcesses := append(s.processes, systemProcesses...)
-	for _, p := range allProcesses {
+	s.addProcesses(systemProcesses...)
+	// Run PreRun for all processes 
+	for _, p := range s.processes {
 		if err := p.PreRun(ctx); err != nil {
 			return fmt.Errorf("pre-run error: %w", err)
 		}
 	}
 
 	// Create error channel
-	errCh := make(chan error, len(allProcesses))
+	errCh := make(chan error, len(s.processes))
 
 	// Start all processes
-	for i, p := range allProcesses {
+	for i, p := range s.processes {
 		process := p
 		index := i
 
@@ -163,8 +163,8 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	// Shutdown all processes in reverse order
-	for i := len(allProcesses) - 1; i >= 0; i-- {
-		p := allProcesses[i]
+	for i := len(s.processes) - 1; i >= 0; i-- {
+		p := s.processes[i]
 		if shutdownErr := p.Shutdown(shutdownCtx); shutdownErr != nil {
 			s.logger.Error("shutdown error", "error", shutdownErr)
 			if err == nil {
