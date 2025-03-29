@@ -131,7 +131,10 @@ func (s *Server) Run(ctx context.Context) error {
 		gatewayOpts...,
 	)
 
+	// Initialize metrics server
 	metricsServer := metrics.NewServer(s.logger, s.cfg.MetricsAddress, s.cfg.CloseTimeout)
+
+	// Initialize pprof server
 	pprofServer := pprof.NewServer(s.logger, s.cfg.PprofAddress)
 
 	// Create system processes
